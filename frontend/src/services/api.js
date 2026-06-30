@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://veiliq-backend.vercel.app/api',
+  baseURL: import.meta.env.PROD ? 'https://veiliq-backend.vercel.app/api' : 'http://localhost:5000/api',
   headers: { 'Content-Type': 'application/json' },
 });
 

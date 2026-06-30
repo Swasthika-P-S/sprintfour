@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
-const API = 'https://veiliq-backend.vercel.app/api';
+const API = import.meta.env.PROD ? 'https://veiliq-backend.vercel.app/api' : 'http://localhost:5000/api';
 
 function calculateAge(dob) {
   if (!dob) return null;
