@@ -33,22 +33,24 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'VEILiq' }));
 app.use(errorHandler);
 
 // Connect to MongoDB
-const PORT = process.env.PORT || 5000;
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
     console.log('MongoDB connected');
-
     // Seed default policy templates if none exist
     const count = await PolicyTemplate.countDocuments();
     if (count === 0) {
       await PolicyTemplate.insertMany(DEFAULT_TEMPLATES);
       console.log(`Seeded ${DEFAULT_TEMPLATES.length} default policy templates.`);
     }
-
-    app.listen(PORT, () => console.log(`VEILiq API running on http://localhost:${PORT}`));
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err.message);
-    process.exit(1);
   });
+
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`VEILiq API running on http://localhost:${PORT}`));
+}
+
+module.exports = app;

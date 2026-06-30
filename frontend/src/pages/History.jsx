@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { getRiskLevel, getRiskLabel } from '../components/PrivacyScore';
 
-const API = 'http://localhost:5000/api';
+const API = 'https://veiliq-backend.vercel.app/api';
 
 const SCORE_COLORS = {
   low:    { bar: 'var(--green-primary)', text: 'var(--green-primary)' },
