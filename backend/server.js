@@ -15,7 +15,7 @@ const DEFAULT_TEMPLATES = require('./services/policyTemplates');
 const app = express();
 
 // Middleware
-app.use(cors({ origin: ['http://localhost:5173', 'https://veiliq.vercel.app', 'https://frontend-two-roan-80.vercel.app'], credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
