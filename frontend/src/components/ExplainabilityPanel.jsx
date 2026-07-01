@@ -14,14 +14,14 @@ export default function ExplainabilityPanel({ selectedEntity }) {
     );
   }
 
-  const isSafe = selectedEntity.isSafe;
+  const isSafe = selectedEntity.isSafe || false;
   const confColor = getConfidenceColor(selectedEntity.confidence);
 
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
-      key={selectedEntity.startIndex} // Re-animate when selection changes
+      key={selectedEntity.idx ?? selectedEntity.text} // Re-animate when selection changes
       className="explainability-card"
     >
       <div className="card-header">

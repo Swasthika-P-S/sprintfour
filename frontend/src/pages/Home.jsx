@@ -100,6 +100,9 @@ export default function Home() {
           setEntities(data.entities || []);
           setAnalyzed(true);
           setTimelineStep(-1);
+          if (data.entities && data.entities.length > 0) {
+            setSelectedEntity({ ...data.entities[0], idx: 0 });
+          }
           addToast(`Analysis complete. Click any highlighted entity to inspect AI reasoning.`);
         }, 800);
       }, 1500); // Pad delay for smooth animation
@@ -187,15 +190,10 @@ export default function Home() {
         segments.push({ text: text.slice(cursor, s), idx: null });
       }
       segments.push({
+        ...e,
         text: text.slice(s, en),
         idx: e.idx,
-        isRedacted: redactedSet.has(e.idx),
-        type: e.type,
-        reason: e.reason,
-        confidence: e.confidence,
-        evidence: e.evidence,
-        privacy_risk: e.privacy_risk,
-        replacement: e.replacement
+        isRedacted: redactedSet.has(e.idx)
       });
       cursor = en;
     }
