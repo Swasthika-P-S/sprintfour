@@ -13,6 +13,7 @@ import ReviewQueue from '../components/ReviewQueue';
 
 import { useAuth } from '../context/AuthContext';
 import { useLanguage, LANGUAGES } from '../context/LanguageContext';
+import { EyeOff, Eye, FileText, FileJson, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 const API = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
 
@@ -272,24 +273,54 @@ export default function Home() {
               <div className="card doc-card">
                 <div className="card-header doc-header">
                   <div className="card-title">Document Inspection</div>
-                  <div className="doc-controls">
-                    {[...new Set(entities.map(e => e.type))].map(type => (
-                      <button key={type} className="btn btn-outline btn-sm" onClick={() => {
-                        const newRedacted = new Set(redactedSet);
-                        entities.forEach((e, i) => {
-                          if (e.type === type && !ignoredSet.has(i)) newRedacted.add(i);
-                        });
-                        setRedactedSet(newRedacted);
-                      }}>
-                        Hide {type}
-                      </button>
-                    ))}
-                    <div className="divider"></div>
-                    <button className="btn btn-secondary btn-sm" onClick={redactAll}>Hide All PII</button>
-                    <button className="btn btn-ghost btn-sm" onClick={clearAll}>Keep All</button>
-                    <div className="divider"></div>
-                    <button className="btn btn-primary btn-sm" onClick={handleDownloadTXT}>Save TXT</button>
-                    <button className="btn btn-primary btn-sm" onClick={handleDownloadJSON}>Save JSON</button>
+                  <div className="doc-controls" style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
+                    
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', marginRight: 8 }}>Quick Filters:</span>
+                      {[...new Set(entities.map(e => e.type))].map(type => (
+                        <button key={type} className="btn-sm" style={{ 
+                          background: 'var(--bg-muted)', color: 'var(--text-dark)', border: '1px solid var(--border)', borderRadius: 20,
+                          padding: '4px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', transition: 'all 0.2s'
+                        }} onClick={(e) => {
+                          e.currentTarget.style.background = 'var(--primary-light)';
+                          e.currentTarget.style.borderColor = 'var(--primary)';
+                          e.currentTarget.style.color = 'var(--primary)';
+                          const newRedacted = new Set(redactedSet);
+                          entities.forEach((ent, i) => {
+                            if (ent.type === type && !ignoredSet.has(i)) newRedacted.add(i);
+                          });
+                          setRedactedSet(newRedacted);
+                          setTimeout(() => {
+                            e.currentTarget.style.background = 'var(--bg-muted)';
+                            e.currentTarget.style.borderColor = 'var(--border)';
+                            e.currentTarget.style.color = 'var(--text-dark)';
+                          }, 200);
+                        }}>
+                          <EyeOff size={14} /> Hide {type}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-muted)', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <button className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={redactAll}>
+                          <ShieldAlert size={16} /> Hide All PII
+                        </button>
+                        <button className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={clearAll}>
+                          <Eye size={16} /> Keep All
+                        </button>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={handleDownloadTXT}>
+                          <FileText size={16} /> Save TXT
+                        </button>
+                        <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={handleDownloadJSON}>
+                          <FileJson size={16} /> Save JSON
+                        </button>
+                      </div>
+                    </div>
+                    
                   </div>
                 </div>
                 <div className="card-body">
