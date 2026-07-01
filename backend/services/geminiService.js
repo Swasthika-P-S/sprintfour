@@ -27,6 +27,7 @@ You MUST provide a unique pseudonym in the "replacement" field for EVERY entity 
 - For specific organizations or places (like a specific research hospital), use a descriptive format like "[REDACTED - hospital 1]".
 - If you detect the same person or entity referred to by multiple names, nicknames, or shorthand (e.g., "Swasthika" and "Swas"), based on the context of the paragraph, you MUST group them by assigning them the EXACT same pseudonym (e.g., both MUST get "[PERSON-1]", not "[PERSON-2]").
 - Do this for all organizations, addresses, and other entities as well (e.g., both "Stanford Hospital" and "Stanford" get "[REDACTED - hospital 1]").
+- CRITICAL: If you find a full name (e.g., Alexandra Davis) and a shorter nickname/first name (e.g., Alex, Alexandra) that MIGHT be the same person, put the shorter name in `suggested_aliases` instead of `sensitive_entities` so we can explicitly ask the user for confirmation.
 
 Return a JSON object ONLY (no explanation, no markdown). It must have this exact structure:
 {
@@ -38,7 +39,15 @@ Return a JSON object ONLY (no explanation, no markdown). It must have this exact
       "reason": "Brief explanation of why this is PII",
       "evidence": ["Matches pattern", "Nearby keyword X", "Government format verified"],
       "privacy_risk": "Identity theft / Financial fraud / Medical Exposure / etc",
-      "replacement": "[NAME-1]" 
+      "replacement": "[PERSON-1]" 
+    }
+  ],
+  "suggested_aliases": [
+    {
+      "text": "Alex",
+      "base_entity": "Alexandra Davis",
+      "proposed_replacement": "[PERSON-1]",
+      "reason": "Shorthand for Alexandra Davis."
     }
   ],
   "safe_entities": [

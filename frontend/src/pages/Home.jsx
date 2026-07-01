@@ -10,6 +10,7 @@ import ExplainabilityPanel from '../components/ExplainabilityPanel';
 import TrustDashboard from '../components/TrustDashboard';
 import AuditReport from '../components/AuditReport';
 import ReviewQueue from '../components/ReviewQueue';
+import AliasResolver from '../components/AliasResolver';
 
 import { useAuth } from '../context/AuthContext';
 import { useLanguage, LANGUAGES } from '../context/LanguageContext';
@@ -61,6 +62,7 @@ export default function Home() {
 
   // New Explainability State
   const [selectedEntity, setSelectedEntity] = useState(null);
+  const [aliasSuggestions, setAliasSuggestions] = useState([]);
 
   const addToast = (message, type = 'success') => {
     const id = Date.now();
@@ -75,6 +77,7 @@ export default function Home() {
     setRedactedSet(new Set());
     setIgnoredSet(new Set());
     setSelectedEntity(null);
+    setAliasSuggestions([]);
     setAnalyzed(false);
     
     // Start Timeline Animation
@@ -99,6 +102,7 @@ export default function Home() {
         setTimelineStep(4);
         setTimeout(() => {
           setEntities(data.entities || []);
+          setAliasSuggestions(data.suggested_aliases || []);
           setAnalyzed(true);
           setTimelineStep(-1);
           if (data.entities && data.entities.length > 0) {
@@ -163,6 +167,62 @@ export default function Home() {
 
   const handleEntityClick = (seg) => {
     setSelectedEntity(seg);
+  };
+
+  const handleAliasConfirm = (idx, isSamePerson) => {
+    const alias = aliasSuggestions[idx];
+    const newSuggestions = [...aliasSuggestions];
+    newSuggestions.splice(idx, 1);
+    setAliasSuggestions(newSuggestions);
+
+    // Escape regex string for safety
+    const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const matches = [...text.matchAll(new RegExp(`\\b${escapeRegExp(alias.text)}\\b`, 'gi'))];
+    const newEntities = [];
+    
+    let newReplacement = alias.proposed_replacement || '[PERSON-1]';
+    if (!isSamePerson) {
+       newReplacement = `[PERSON-X${Math.floor(Math.random()*100)}]`;
+    }
+
+    for (const m of matches) {
+      const s = m.index;
+      const e = m.index + alias.text.length;
+      const overlaps = entities.some(ent => {
+         const es = ent.start ?? ent.startIndex ?? 0;
+         const ee = ent.end ?? ent.endIndex ?? 0;
+         return (s >= es && s < ee) || (e > es && e <= ee) || (s <= es && e >= ee);
+      });
+      if (!overlaps) {
+         newEntities.push({
+           text: m[0],
+           start: s,
+           end: e,
+           type: 'NAME',
+           confidence: 85,
+           reason: alias.reason || 'User confirmed alias.',
+           privacy_risk: 'Identity Tracking',
+           replacement: newReplacement
+         });
+      }
+    }
+
+    if (newEntities.length > 0) {
+      setEntities(prev => {
+        const updated = [...prev, ...newEntities];
+        const newlyAddedIndices = Array.from({length: newEntities.length}, (_, i) => prev.length + i);
+        setRedactedSet(rs => {
+          const nextRs = new Set(rs);
+          newlyAddedIndices.forEach(i => nextRs.add(i));
+          return nextRs;
+        });
+        return updated;
+      });
+      addToast(`Found and redacted ${newEntities.length} occurrences of "${alias.text}".`);
+    } else {
+      addToast(`No additional unredacted occurrences of "${alias.text}" found.`);
+    }
   };
 
   const buildDocSegments = () => {
@@ -358,6 +418,11 @@ export default function Home() {
                 humanApproved: ignoredSet.size,
                 score: computePrivacyScore(entities.filter((_, i) => !redactedSet.has(i)), context)
               }} />
+
+              <AliasResolver 
+                aliases={aliasSuggestions} 
+                onResolve={handleAliasConfirm} 
+              />
 
               <ReviewQueue 
                 entities={entities} 
