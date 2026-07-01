@@ -32,14 +32,17 @@ Return a JSON object ONLY (no explanation, no markdown). It must have this exact
     {
       "text": "Exact text from input",
       "type": "NAME" | "ADDRESS" | "ORG" | "INDIRECT",
-      "confidence": 98,
+      "confidence": 99.8,
       "reason": "Brief explanation of why this is PII",
+      "evidence": ["Matches pattern", "Nearby keyword X", "Government format verified"],
+      "privacy_risk": "Identity theft / Financial fraud / Medical Exposure / etc",
       "replacement": "[Person A]" 
     }
   ],
   "safe_entities": [
     {
       "text": "Exact text from input",
+      "confidence": 99.4,
       "reason": "Brief explanation of why this is explicitly SAFE to keep"
     }
   ]
@@ -74,10 +77,12 @@ ${text}
           text: e.text,
           type: e.type,
           confidence: e.confidence || 80,
-          reason: e.reason || `Detected by AI as ${e.type}`,
+          reason: e.reason || \`Detected by AI as \${e.type}\`,
+          evidence: e.evidence || ["AI Contextual Match"],
+          privacy_risk: e.privacy_risk || "Data Exposure",
           startIndex,
           endIndex,
-          replacement: e.replacement || `[${e.type}]`,
+          replacement: e.replacement || \`[\${e.type}]\`,
           status: 'pending',
         };
       });
@@ -89,6 +94,7 @@ ${text}
         const endIndex = startIndex + e.text.length;
         return {
           text: e.text,
+          confidence: e.confidence || 95,
           reason: e.reason || "Evaluated as safe.",
           startIndex,
           endIndex,
