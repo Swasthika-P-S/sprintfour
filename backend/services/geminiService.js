@@ -23,9 +23,9 @@ TASK 1: Identifiy Sensitive Entities
 Identify Names, Physical Addresses, Organizations, and Indirect Identifiers (like Roll Numbers, Job Titles).
 CRITICAL (Alias Resolution & Pseudonymization): 
 You MUST provide a unique pseudonym in the "replacement" field for EVERY entity you find. 
-- For names, use "[NAME-1]", "[NAME-2]", etc.
+- For names, use "[PERSON-1]", "[PERSON-2]", etc.
 - For specific organizations or places (like a specific research hospital), use a descriptive format like "[REDACTED - hospital 1]".
-- If you detect the same person or entity referred to by multiple names, nicknames, or shorthand (e.g., "Swasthika" and "Swas"), based on the context of the paragraph, you MUST group them by assigning them the EXACT same pseudonym (e.g., both MUST get "[NAME-1]", not "[NAME-2]").
+- If you detect the same person or entity referred to by multiple names, nicknames, or shorthand (e.g., "Swasthika" and "Swas"), based on the context of the paragraph, you MUST group them by assigning them the EXACT same pseudonym (e.g., both MUST get "[PERSON-1]", not "[PERSON-2]").
 - Do this for all organizations, addresses, and other entities as well (e.g., both "Stanford Hospital" and "Stanford" get "[REDACTED - hospital 1]").
 
 Return a JSON object ONLY (no explanation, no markdown). It must have this exact structure:
