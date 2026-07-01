@@ -68,7 +68,7 @@ export default function Navbar() {
             id="nav-history"
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
           >
-            Documents
+            Audit Bar
           </NavLink>
         </div>
       )}
