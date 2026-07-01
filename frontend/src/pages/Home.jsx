@@ -210,6 +210,39 @@ export default function Home() {
     return 'var(--conf-red)';
   }
 
+  const generateRedactedText = () => {
+    return buildDocSegments().map(seg => {
+      if (seg.isRedacted) return seg.replacement || `[${seg.type}]`;
+      return seg.text;
+    }).join('');
+  };
+
+  const handleDownloadTXT = () => {
+    const content = generateRedactedText();
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `redacted_document_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadJSON = () => {
+    const data = {
+      original: text,
+      redacted: generateRedactedText(),
+      entities_hidden: entities.filter((_, i) => redactedSet.has(i)).map(e => ({ text: e.text, type: e.type, replacement: e.replacement }))
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `redacted_data_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <Toast toasts={toasts} />
@@ -256,6 +289,9 @@ export default function Home() {
                     <div className="divider"></div>
                     <button className="btn btn-secondary btn-sm" onClick={redactAll}>Hide All PII</button>
                     <button className="btn btn-ghost btn-sm" onClick={clearAll}>Keep All</button>
+                    <div className="divider"></div>
+                    <button className="btn btn-primary btn-sm" onClick={handleDownloadTXT}>Save TXT</button>
+                    <button className="btn btn-primary btn-sm" onClick={handleDownloadJSON}>Save JSON</button>
                   </div>
                 </div>
                 <div className="card-body">
