@@ -21,10 +21,11 @@ Analyze the following text and perform two tasks:
 
 TASK 1: Identifiy Sensitive Entities
 Identify Names, Physical Addresses, Organizations, and Indirect Identifiers (like Roll Numbers, Job Titles).
-CRITICAL (Alias Resolution): If you detect the same person or entity referred to by multiple names or nicknames (e.g. "Swasthika" and "Swas"), assign them the EXACT same pseudonym in the "replacement" field (e.g., "[Person A]", "[Person B]"). 
-
-TASK 2: Identify Safe Entities (X-Ray Mode)
-Identify words that MIGHT look like entities but are 100% safe to keep (e.g. Public company names like "Google", generic locations like "India", common nouns).
+CRITICAL (Alias Resolution & Pseudonymization): 
+You MUST provide a unique pseudonym in the "replacement" field for EVERY entity you find. 
+- For names, use "[NAME-1]", "[NAME-2]", etc.
+- If you detect the same person or entity referred to by multiple names, nicknames, or shorthand (e.g. "Swasthika" and "Swas"), you MUST group them by assigning them the EXACT same pseudonym (e.g., both get "[NAME-1]").
+- Do this for all organizations, addresses, and other entities as well (e.g., "[ORG-1]", "[ADDR-1]").
 
 Return a JSON object ONLY (no explanation, no markdown). It must have this exact structure:
 {
@@ -36,7 +37,7 @@ Return a JSON object ONLY (no explanation, no markdown). It must have this exact
       "reason": "Brief explanation of why this is PII",
       "evidence": ["Matches pattern", "Nearby keyword X", "Government format verified"],
       "privacy_risk": "Identity theft / Financial fraud / Medical Exposure / etc",
-      "replacement": "[Person A]" 
+      "replacement": "[NAME-1]" 
     }
   ],
   "safe_entities": [

@@ -40,8 +40,6 @@ export default function Home() {
   const [fileName, setFileName] = useState('');
 
   const [entities, setEntities] = useState([]);
-  const [safeEntities, setSafeEntities] = useState([]);
-  const [xrayMode, setXrayMode] = useState(false);
   const [redactedSet, setRedactedSet] = useState(new Set());
   const [ignoredSet, setIgnoredSet] = useState(new Set());
   
@@ -73,7 +71,6 @@ export default function Home() {
     setText(data.text);
     setFileName(data.filename);
     setEntities([]);
-    setSafeEntities([]);
     setRedactedSet(new Set());
     setIgnoredSet(new Set());
     setSelectedEntity(null);
@@ -101,7 +98,6 @@ export default function Home() {
         setTimelineStep(4);
         setTimeout(() => {
           setEntities(data.entities || []);
-          setSafeEntities(data.safeEntities || []);
           setAnalyzed(true);
           setTimelineStep(-1);
           addToast(`Analysis complete. Click any highlighted entity to inspect AI reasoning.`);
@@ -166,12 +162,9 @@ export default function Home() {
   };
 
   const buildDocSegments = () => {
-    if (!entities.length && (!xrayMode || !safeEntities.length)) return [{ text, idx: null }];
+    if (!entities.length) return [{ text, idx: null }];
     
     let combined = [...entities].map((e, idx) => ({ ...e, idx, isSafe: false }));
-    if (xrayMode && safeEntities.length) {
-      combined = [...combined, ...safeEntities.map((e) => ({ ...e, idx: null, isSafe: true }))];
-    }
     
     const sorted = combined.sort((a, b) => (a.startIndex ?? a.start ?? 0) - (b.startIndex ?? b.start ?? 0));
     const nonOverlapping = [];
@@ -193,26 +186,17 @@ export default function Home() {
       if (s > cursor) {
         segments.push({ text: text.slice(cursor, s), idx: null });
       }
-      if (e.isSafe) {
-        segments.push({
-          text: text.slice(s, en),
-          idx: null,
-          isSafe: true,
-          reason: e.reason,
-          confidence: e.confidence
-        });
-      } else {
-        segments.push({
-          text: text.slice(s, en),
-          idx: e.idx,
-          isRedacted: redactedSet.has(e.idx),
-          type: e.type,
-          reason: e.reason,
-          confidence: e.confidence,
-          evidence: e.evidence,
-          privacy_risk: e.privacy_risk
-        });
-      }
+      segments.push({
+        text: text.slice(s, en),
+        idx: e.idx,
+        isRedacted: redactedSet.has(e.idx),
+        type: e.type,
+        reason: e.reason,
+        confidence: e.confidence,
+        evidence: e.evidence,
+        privacy_risk: e.privacy_risk,
+        replacement: e.replacement
+      });
       cursor = en;
     }
     if (cursor < text.length) segments.push({ text: text.slice(cursor), idx: null });
@@ -258,9 +242,17 @@ export default function Home() {
                 <div className="card-header doc-header">
                   <div className="card-title">Document Inspection</div>
                   <div className="doc-controls">
-                    <button className={`btn btn-sm ${xrayMode ? 'btn-primary' : 'btn-outline'}`} onClick={() => setXrayMode(!xrayMode)}>
-                      {xrayMode ? 'Hide Safe Items' : 'Show Safe Items'}
-                    </button>
+                    {[...new Set(entities.map(e => e.type))].map(type => (
+                      <button key={type} className="btn btn-outline btn-sm" onClick={() => {
+                        const newRedacted = new Set(redactedSet);
+                        entities.forEach((e, i) => {
+                          if (e.type === type && !ignoredSet.has(i)) newRedacted.add(i);
+                        });
+                        setRedactedSet(newRedacted);
+                      }}>
+                        Hide {type}
+                      </button>
+                    ))}
                     <div className="divider"></div>
                     <button className="btn btn-secondary btn-sm" onClick={redactAll}>Hide All PII</button>
                     <button className="btn btn-ghost btn-sm" onClick={clearAll}>Keep All</button>
@@ -276,26 +268,15 @@ export default function Home() {
                       const isSelected = selectedEntity?.text === seg.text && selectedEntity?.idx === seg.idx;
                       const confColor = getConfidenceColor(seg.confidence);
                       
-                      if (seg.isSafe) {
-                        return (
-                          <mark
-                            key={i}
-                            className={`safe-mark ${isSelected ? 'selected' : ''}`}
-                            onClick={() => handleEntityClick(seg)}
-                          >
-                            {seg.text}
-                          </mark>
-                        );
-                      }
-                      
                       return (
                         <mark
                           key={i}
+                          title={seg.reason}
                           className={`entity-mark ${seg.isRedacted ? 'redacted' : ''} ${isSelected ? 'selected' : ''}`}
                           style={{ borderBottom: `2px solid ${confColor}` }}
                           onClick={() => handleEntityClick(seg)}
                         >
-                          {seg.text}
+                          {seg.isRedacted ? (seg.replacement || `[${seg.type}]`) : seg.text}
                         </mark>
                       );
                     })}

@@ -45,9 +45,14 @@
   border-bottom: 2px solid var(--primary) !important;
 }
 .entity-mark.redacted {
-  background: #111;
-  color: transparent !important;
+  background: var(--bg-muted);
+  color: var(--text-faint) !important;
+  border: 1px solid var(--border);
   border-bottom: none !important;
+  border-radius: var(--radius-sm);
+  padding: 0 4px;
+  font-family: monospace;
+  font-size: 0.85em;
   text-shadow: none;
 }
 .entity-mark.redacted:hover {
