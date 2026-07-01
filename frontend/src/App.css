@@ -64,12 +64,13 @@
 }
 
 [data-theme="dark"] {
-  --bg-base:         #0C1210;
-  --bg-card:         #151E1A;
-  --bg-muted:        #101714;
-  --bg-input:        #1C2820;
-  --bg-hover:        #1C2820;
-  --bg-glass:        rgba(21,30,26,0.80);
+  --bg-base:         #050807; /* Super deep space green/black */
+  --bg-card:         #0C1310; /* Elevated glass background */
+  --bg-muted:        #121B17;
+  --bg-input:        #1A241F;
+  --bg-hover:        #1C2A23;
+  --bg-glass:        rgba(15, 23, 19, 0.7);
+  --bg-glass-strong: rgba(20, 30, 25, 0.85);
 
   --text-dark:       #EBF5EF;
   --text-body:       #B8D4C4;
@@ -77,13 +78,10 @@
   --text-faint:      #3E5A4A;
   --text-inverse:    #0C1210;
 
-  --primary:   #5BB880;
-  --green-mid:       #6ECF96;
-  --primary-hover:     #78D9A2;
-  --primary-light:     rgba(91,184,128,0.10);
-  --shadow-glow:      rgba(91,184,128,0.18);
-  --shadow-glow:      rgba(91,184,128,0.28);
-  --gradient-primary:  linear-gradient(135deg, #4FA370 0%, #6ECF96 100%);
+  --primary:         #5BB880;
+  --primary-hover:   #78D9A2;
+  --primary-light:   rgba(91,184,128,0.10);
+  --gradient-primary: linear-gradient(135deg, #4FA370 0%, #6ECF96 100%);
 
   --amber:           #F59E0B;
   --amber-bg:        rgba(245,158,11,0.13);
@@ -94,16 +92,18 @@
   --purple:          #A78BFA;
   --purple-bg:       rgba(167,139,250,0.13);
 
-  --border:          #223029;
-  --border-focus:    #5BB880;
-  --border-strong:   #2E4238;
+  --border:          #1F2F26;
+  --border-focus:    #34D399;
+  --border-strong:   #2B4034;
+  --border-glass:    rgba(255, 255, 255, 0.08);
 
-  --shadow-xs:       0 1px 2px rgba(0,0,0,0.25);
-  --shadow-sm:       0 2px 8px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25);
-  --shadow-md:       0 6px 20px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30);
-  --shadow-lg:       0 16px 48px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.40);
-  --shadow-xl:       0 28px 72px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.45);
-  --shadow-glow:    0 8px 24px rgba(91,184,128,0.20);
+  --shadow-xs:       0 1px 2px rgba(0,0,0,0.4);
+  --shadow-sm:       0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:       0 8px 24px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-lg:       0 16px 48px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.6);
+  --shadow-glow:     0 0 30px rgba(52, 211, 153, 0.15), inset 0 0 20px rgba(52, 211, 153, 0.05);
+  --shadow-glow-red: 0 0 30px rgba(248, 113, 113, 0.15), inset 0 0 20px rgba(248, 113, 113, 0.05);
+  --shadow-glass:    0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 /* ── 2. Reset & Base ──────────────────────────────────────── */

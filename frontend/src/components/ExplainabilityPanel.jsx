@@ -7,9 +7,11 @@ export default function ExplainabilityPanel({ selectedEntity }) {
 
   if (!selectedEntity) {
     return (
-      <div className="empty-panel-state">
-        <Info size={32} color="var(--text-faint)" />
-        <p>Select any highlighted word in the document to inspect the AI's decision process.</p>
+      <div className="empty-panel-state glass-card">
+        <div className="glow-orb" />
+        <Info size={40} color="var(--primary)" style={{ opacity: 0.8, marginBottom: 16 }} />
+        <h4 style={{ color: 'var(--text-dark)', fontWeight: 700, marginBottom: 8 }}>AI Inspection Panel</h4>
+        <p style={{ color: 'var(--text-muted)' }}>Select any highlighted word in the document to inspect the AI's deep reasoning process.</p>
       </div>
     );
   }
@@ -19,28 +21,32 @@ export default function ExplainabilityPanel({ selectedEntity }) {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      key={selectedEntity.idx ?? selectedEntity.text} // Re-animate when selection changes
-      className="explainability-card"
+      initial={{ opacity: 0, y: 15, scale: 0.98 }} 
+      animate={{ opacity: 1, y: 0, scale: 1 }} 
+      key={selectedEntity.idx ?? selectedEntity.text}
+      className="explainability-card glass-card"
     >
-      <div className="card-header">
-        {isSafe ? <ShieldCheck size={28} color="var(--conf-green)" /> : <ShieldAlert size={28} color="var(--conf-red)" />}
-        <div>
-          <div className="entity-text">{selectedEntity.text}</div>
-          <div className="decision-badge" style={{ background: isSafe ? 'var(--conf-green-bg)' : 'var(--conf-red-bg)', color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)' }}>
-            Decision: {isSafe ? 'VISIBLE' : 'HIDDEN'}
+      <div className="card-header" style={{ borderBottom: '1px solid var(--border-glass)', paddingBottom: 20, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="icon-glass-wrapper" style={{ background: isSafe ? 'var(--conf-green-bg)' : 'var(--conf-red-bg)', color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)', boxShadow: isSafe ? 'var(--shadow-glow)' : 'var(--shadow-glow-red)' }}>
+            {isSafe ? <ShieldCheck size={28} /> : <ShieldAlert size={28} />}
+          </div>
+          <div>
+            <div className="entity-text gradient-text" style={{ fontSize: '1.4rem' }}>{selectedEntity.text}</div>
+            <div className="decision-badge" style={{ background: isSafe ? 'var(--conf-green-bg)' : 'var(--conf-red-bg)', color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)', borderColor: isSafe ? 'var(--conf-green)' : 'var(--conf-red)' }}>
+              Decision: {isSafe ? 'VISIBLE' : 'HIDDEN'}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="metric-row">
-        <div className="metric-box">
+      <div className="metric-row" style={{ gap: 16, marginBottom: 28 }}>
+        <div className="metric-box glass-box" style={{ flex: 1 }}>
           <span className="metric-label">Confidence</span>
-          <span className="metric-value" style={{ color: confColor }}>{selectedEntity.confidence}%</span>
+          <span className="metric-value neon-text" style={{ color: confColor }}>{selectedEntity.confidence}%</span>
         </div>
         {!isSafe && selectedEntity.type && (
-          <div className="metric-box">
+          <div className="metric-box glass-box" style={{ flex: 1 }}>
             <span className="metric-label">Entity Type</span>
             <span className="metric-value">{selectedEntity.type}</span>
           </div>
@@ -48,26 +54,30 @@ export default function ExplainabilityPanel({ selectedEntity }) {
       </div>
 
       <div className="section-title">Primary Reason</div>
-      <p className="reason-text">{selectedEntity.reason}</p>
+      <div className="glass-box reason-box" style={{ marginBottom: 24 }}>
+        <p className="reason-text" style={{ margin: 0 }}>{selectedEntity.reason}</p>
+      </div>
 
       {!isSafe && (
         <>
           <div className="section-title">Privacy Risk (If leaked)</div>
-          <p className="risk-text">{selectedEntity.privacy_risk}</p>
+          <div className="glass-box risk-box" style={{ marginBottom: 24, borderLeft: '4px solid var(--red)' }}>
+            <p className="risk-text" style={{ margin: 0, color: 'var(--red)' }}>{selectedEntity.privacy_risk}</p>
+          </div>
 
           <div className="section-title">Supporting Evidence</div>
-          <ul className="evidence-list">
+          <ul className="evidence-list glass-list">
             {(selectedEntity.evidence || []).map((ev, i) => (
-              <li key={i}>{ev}</li>
+              <li key={i} className="glass-list-item">{ev}</li>
             ))}
           </ul>
         </>
       )}
 
-      <div className="cross-examination-section">
-        <button className="expand-btn" onClick={() => setExpanded(!expanded)}>
-          <HelpCircle size={16} /> AI Cross Examination
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      <div className="cross-examination-section" style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border-glass)' }}>
+        <button className="expand-btn glass-btn" onClick={() => setExpanded(!expanded)}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><HelpCircle size={18} /> AI Clinical Analysis</span>
+          {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </button>
         <AnimatePresence>
           {expanded && (
@@ -76,14 +86,15 @@ export default function ExplainabilityPanel({ selectedEntity }) {
               animate={{ height: 'auto', opacity: 1 }} 
               exit={{ height: 0, opacity: 0 }}
               className="qna-list"
+              style={{ overflow: 'hidden', marginTop: 16 }}
             >
-              <div className="qna-item">
-                <div className="q-text">Why was this {isSafe ? 'kept visible' : 'hidden'}?</div>
+              <div className="qna-item glass-box" style={{ marginBottom: 12 }}>
+                <div className="q-text" style={{ color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>Why was this {isSafe ? 'kept visible' : 'hidden'}?</div>
                 <div className="a-text">{selectedEntity.reason}</div>
               </div>
               {!isSafe && (
-                <div className="qna-item">
-                  <div className="q-text">What if this stayed visible?</div>
+                <div className="qna-item glass-box">
+                  <div className="q-text" style={{ color: 'var(--primary)', fontWeight: 600, marginBottom: 4 }}>What if this stayed visible?</div>
                   <div className="a-text">It poses a direct risk of {selectedEntity.privacy_risk}.</div>
                 </div>
               )}
