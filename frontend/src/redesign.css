@@ -382,9 +382,14 @@
 
 /* Landing Section */
 .landing-hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 80px 20px;
-  max-width: 700px;
+  max-width: 800px;
+  min-height: 60vh;
   margin: 0 auto;
 }
 .landing-title {

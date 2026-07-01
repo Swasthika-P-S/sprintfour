@@ -1,49 +1,65 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
-export default function Timeline({ steps, currentStep }) {
+export default function Timeline() {
+  const text = "VEILiq is here for you!!";
+  const [displayedText, setDisplayedText] = useState("");
+  
+  useEffect(() => {
+    let index = 0;
+    const interval = setInterval(() => {
+      setDisplayedText((prev) => text.slice(0, index));
+      index++;
+      if (index > text.length) clearInterval(interval);
+    }, 80); // Adjust typing speed here
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="timeline-container" style={{ padding: '32px', background: 'var(--bg-card)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border)', maxWidth: 450, margin: '40px auto' }}>
-      <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-dark)', marginBottom: 24, textAlign: 'center' }}>VEILiq is here for you!!</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {steps.map((step, index) => {
-          const isCompleted = index < currentStep;
-          const isActive = index === currentStep;
-          const isPending = index > currentStep;
-
-          return (
-            <motion.div 
-              key={step.id} 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.15 }}
-              style={{ display: 'flex', alignItems: 'center', gap: 16 }}
-            >
-              <div style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {isCompleted ? (
-                  <CheckCircle2 size={24} color="var(--primary)" />
-                ) : isActive ? (
-                  <Loader2 size={24} color="var(--primary)" className="spin-animation" />
-                ) : (
-                  <Circle size={24} color="var(--border-strong)" />
-                )}
-              </div>
-              <span style={{ 
-                fontSize: '1rem', 
-                fontWeight: isActive || isCompleted ? 600 : 500, 
-                color: isActive ? 'var(--primary)' : isCompleted ? 'var(--text-dark)' : 'var(--text-faint)' 
-              }}>
-                {step.label}
-              </span>
-            </motion.div>
-          );
-        })}
-      </div>
-      <style>{`
-        .spin-animation { animation: spin 1.5s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-      `}</style>
+    <div className="timeline-container" style={{ 
+      padding: '80px 32px', 
+      background: 'var(--bg-card)', 
+      borderRadius: 'var(--radius-xl)', 
+      boxShadow: 'var(--shadow-md)', 
+      border: '1px solid var(--border)', 
+      maxWidth: 500, 
+      margin: '60px auto', 
+      textAlign: 'center', 
+      minHeight: '200px', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center' 
+    }}>
+      <style>
+        {`@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');`}
+      </style>
+      <h3 style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-dark)', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ 
+          fontFamily: '"Dancing Script", cursive', 
+          color: 'var(--primary)', 
+          fontSize: '2.4rem', 
+          marginRight: '8px',
+          display: 'inline-block'
+        }}>
+          {displayedText.slice(0, 6)}
+        </span>
+        <span style={{ display: 'inline-block', minWidth: '180px', textAlign: 'left' }}>
+          {displayedText.slice(6)}
+          <motion.span 
+            animate={{ opacity: [0, 1, 0] }} 
+            transition={{ repeat: Infinity, duration: 0.8 }}
+            style={{ 
+              display: 'inline-block', 
+              width: '3px', 
+              height: '1.6rem', 
+              background: 'var(--primary)', 
+              marginLeft: '4px', 
+              verticalAlign: 'middle',
+              borderRadius: '2px'
+            }}
+          />
+        </span>
+      </h3>
     </div>
   );
 }

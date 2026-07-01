@@ -315,16 +315,7 @@ export default function Home() {
         )}
 
         {timelineStep !== -1 && (
-          <Timeline 
-            currentStep={timelineStep} 
-            steps={[
-              { id: 'upload', label: 'Document Uploaded Securely' },
-              { id: 'ocr', label: 'Extracting Text Context' },
-              { id: 'detect', label: 'Deep Scanning for Sensitive Entities' },
-              { id: 'eval', label: 'Calculating Confidence & Explanations' },
-              { id: 'rules', label: 'Generating Privacy Evidence' }
-            ]} 
-          />
+          <Timeline />
         )}
 
         {analyzed && text && (
