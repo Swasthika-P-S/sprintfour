@@ -39,7 +39,7 @@ export default function Home() {
   const langName = LANGUAGES.find(l => l.code === lang)?.label || 'English';
 
   // Input state
-  const [inputTab, setInputTab] = useState('paste'); // 'paste' | 'upload'
+  const [inputTab, setInputTab] = useState('upload'); // 'upload'
   const [text, setText] = useState('');
   const [fileName, setFileName] = useState('');
 
@@ -545,53 +545,10 @@ export default function Home() {
             <div className="card" style={{ marginBottom: 24 }}>
               <div className="card-body">
 
-                {/* Tabs */}
-                <div className="upload-tabs">
-                  <button
-                    id="tab-paste"
-                    className={`upload-tab${inputTab === 'paste' ? ' active' : ''}`}
-                    onClick={() => setInputTab('paste')}
-                  >
-                    {t.tabPaste}
-                  </button>
-                  <button
-                    id="tab-upload"
-                    className={`upload-tab${inputTab === 'upload' ? ' active' : ''}`}
-                    onClick={() => setInputTab('upload')}
-                  >
-                    {t.tabUpload}
-                  </button>
-                </div>
-
-                {inputTab === 'paste' ? (
-                  <div className="field-group">
-                    <textarea
-                      id="text-input"
-                      placeholder={t.placeholderInput}
-                      value={text}
-                      onChange={(e) => { setText(e.target.value); setAnalyzed(false); }}
-                      rows={10}
-                    />
-                  </div>
-                ) : (
-                  <FileUpload
-                    onResult={handleFileResult}
-                    onError={(msg) => addToast(msg, 'error')}
-                  />
-                )}
-
-                {inputTab === 'paste' && (
-                  <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      id="analyze-btn"
-                      className="btn btn-primary"
-                      onClick={handleAnalyze}
-                      disabled={analyzing || !text.trim()}
-                    >
-                      {analyzing ? <><span className="btn-spinner" /> {t.btnAnalyzing}</> : t.btnAnalyze}
-                    </button>
-                  </div>
-                )}
+                <FileUpload
+                  onResult={handleFileResult}
+                  onError={(msg) => addToast(msg, 'error')}
+                />
               </div>
             </div>
 
