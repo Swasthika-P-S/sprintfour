@@ -320,7 +320,7 @@ export default function Home() {
         )}
 
         {analyzed && text && (
-          <AuditReport entities={entities} safeEntities={safeEntities} />
+          <AuditReport entities={entities} safeEntities={[]} />
         )}
       </div>
     </>
