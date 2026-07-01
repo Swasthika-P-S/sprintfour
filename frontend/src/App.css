@@ -22,12 +22,12 @@
   --text-faint:      #9CA3AF;
   --text-inverse:    #FFFFFF;
 
-  --primary:         #4F46E5; /* Indigo */
-  --primary-hover:   #4338CA;
-  --primary-light:   #EEF2FF;
-  --secondary:       #7C3AED; /* Purple */
+  --primary:         #10A37F; /* Green */
+  --primary-hover:   #0E906F;
+  --primary-light:   #E6F6F2;
+  --secondary:       #059669; /* Emerald */
   
-  --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  --gradient-primary: linear-gradient(135deg, #10A37F 0%, #059669 100%);
   --gradient-glass:   linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
   
   /* Confidence Colors */

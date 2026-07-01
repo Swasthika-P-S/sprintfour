@@ -2,12 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage, LANGUAGES } from '../context/LanguageContext';
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const { lang, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropRef = useRef();
@@ -38,11 +36,10 @@ export default function Navbar() {
       {/* Brand */}
       <NavLink to="/" className="navbar-brand" id="nav-brand">
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-          <circle cx="14" cy="14" r="14" fill="var(--green-primary)" opacity="0.18" />
-          {/* Veil / shield icon */}
+          <circle cx="14" cy="14" r="14" fill="var(--primary)" opacity="0.18" />
           <path
             d="M14 4L6 7.5V14c0 4.6 3.4 8.9 8 9.9 4.6-1 8-5.3 8-9.9V7.5L14 4zm-1 13l-3.5-3.5 1.4-1.4L13 14.2l5.1-5.1 1.4 1.4L13 17z"
-            fill="var(--green-primary)"
+            fill="var(--primary)"
           />
         </svg>
         VEILiq
@@ -57,14 +54,21 @@ export default function Navbar() {
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
             end
           >
-            {t.navAnalyze}
+            Analyse
+          </NavLink>
+          <NavLink
+            to="/settings"
+            id="nav-settings"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            Settings
           </NavLink>
           <NavLink
             to="/history"
             id="nav-history"
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
           >
-            {t.navHistory}
+            Documents
           </NavLink>
         </div>
       )}
@@ -81,31 +85,6 @@ export default function Navbar() {
         >
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-
-        {/* Language Switcher */}
-        <div style={{ display: 'flex', gap: 2, background: 'var(--bg-muted)', borderRadius: 'var(--radius-full)', padding: '3px' }}>
-          {LANGUAGES.map((l) => (
-            <button
-              key={l.code}
-              onClick={() => setLanguage(l.code)}
-              title={l.label}
-              style={{
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-full)',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                letterSpacing: '0.03em',
-                transition: 'all 0.15s',
-                background: lang === l.code ? 'var(--green-primary)' : 'transparent',
-                color: lang === l.code ? '#fff' : 'var(--text-muted)',
-              }}
-            >
-              {l.code.toUpperCase()}
-            </button>
-          ))}
-        </div>
 
         {/* User Menu or Auth Buttons */}
         {user ? (
@@ -147,15 +126,15 @@ export default function Navbar() {
                   role="menuitem"
                   id="logout-btn"
                 >
-                  <span>→</span> {t.navSignOut}
+                  <span>→</span> Sign Out
                 </button>
               </div>
             )}
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
-            <NavLink to="/signin" className="btn btn-ghost btn-sm" id="nav-signin">{t.navSignIn}</NavLink>
-            <NavLink to="/signup" className="btn btn-primary btn-sm" id="nav-signup">{t.navGetStarted}</NavLink>
+            <NavLink to="/signin" className="btn btn-ghost btn-sm" id="nav-signin">Sign In</NavLink>
+            <NavLink to="/signup" className="btn btn-primary btn-sm" id="nav-signup">Get Started</NavLink>
           </div>
         )}
       </div>
