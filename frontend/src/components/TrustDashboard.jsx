@@ -24,25 +24,36 @@ export default function TrustDashboard({ metrics }) {
         <MetricCard icon={<CheckCircle color="var(--text-dark)" />} label="Human Approved" value={metrics.humanApproved} />
       </div>
 
-      <div className="privacy-risk-panel">
-        <h4 className="section-title" style={{ marginTop: 24, marginBottom: 16 }}>Privacy Risk Exposure</h4>
-        
-        <div className="risk-columns">
-          <div className="risk-column">
-            <div className="risk-col-title">Before Redaction</div>
-            <RiskMeter label="Identity Theft" level={9} color="var(--conf-red)" />
-            <RiskMeter label="Financial Fraud" level={7} color="var(--conf-orange)" />
-            <RiskMeter label="Medical Exposure" level={6} color="var(--conf-yellow)" />
-          </div>
-          
-          <div className="risk-column">
-            <div className="risk-col-title">After Redaction</div>
-            <RiskMeter label="Identity Theft" level={1} color="var(--conf-green)" />
-            <RiskMeter label="Financial Fraud" level={1} color="var(--conf-green)" />
-            <RiskMeter label="Medical Exposure" level={1} color="var(--conf-green)" />
-          </div>
+      <div className="compliance-panel" style={{ marginTop: 32, padding: '24px 28px', background: 'var(--bg-muted)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+        <h4 className="section-title" style={{ marginBottom: 20 }}>Regulatory Compliance Readiness</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <ComplianceRow label="GDPR (Europe - Article 5/17)" status={metrics.score >= 90 ? 'Passed' : 'At Risk'} />
+          <ComplianceRow label="HIPAA (Healthcare - Safe Harbor)" status={metrics.score >= 95 ? 'Passed' : 'At Risk'} />
+          <ComplianceRow label="CCPA (California Privacy Rights)" status={metrics.score >= 85 ? 'Passed' : 'At Risk'} />
+          <ComplianceRow label="PCI-DSS (Financial Data Protection)" status={metrics.score >= 98 ? 'Passed' : 'At Risk'} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function ComplianceRow({ label, status }) {
+  const isPassed = status === 'Passed';
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-dark)' }}>{label}</span>
+      <span style={{ 
+        fontSize: '0.75rem', 
+        fontWeight: 800, 
+        padding: '4px 12px', 
+        borderRadius: 20,
+        background: isPassed ? 'var(--conf-green-bg, rgba(46, 204, 113, 0.15))' : 'var(--conf-red-bg, rgba(231, 76, 60, 0.15))',
+        color: isPassed ? 'var(--conf-green)' : 'var(--conf-red)',
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase'
+      }}>
+        {status}
+      </span>
     </div>
   );
 }
