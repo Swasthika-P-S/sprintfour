@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { getRiskLevel, getRiskLabel } from '../components/PrivacyScore';
 
-const API = import.meta.env.PROD ? '/api' : 'http://localhost:7860/api';
+const API = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
 
 const SCORE_COLORS = {
   low:    { bar: 'var(--green-primary)', text: 'var(--green-primary)' },
@@ -80,7 +80,9 @@ export default function History() {
           {/* Left: History Grid */}
           <div className="history-grid">
             {history.map((doc) => {
-              const score = doc.stats?.score ?? 100;
+              const total = doc.stats?.total || 0;
+              const redacted = doc.stats?.redacted || 0;
+              const score = total > 0 ? Math.round((redacted / total) * 100) : 100;
               const level = getRiskLevel(score);
               const label = getRiskLabel(score);
               const colors = SCORE_COLORS[level];

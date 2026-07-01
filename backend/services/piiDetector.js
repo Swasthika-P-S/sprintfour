@@ -61,10 +61,7 @@ const PII_PATTERNS = [
   },
 ];
 
-/**
- * Run all regex patterns on the input text.
- * Returns deduplicated, sorted entities.
- */
+
 function detectWithRegex(text) {
   const entities = [];
   const seen = new Set();

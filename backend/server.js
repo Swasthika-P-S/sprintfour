@@ -38,7 +38,7 @@ app.use(errorHandler);
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
 // Fallback to index.html for React Router
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 

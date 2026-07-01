@@ -23,8 +23,9 @@ const documentSchema = new mongoose.Schema(
     detectedPII: [piiEntitySchema],
     stats: {
       total: { type: Number, default: 0 },
-      accepted: { type: Number, default: 0 },
-      rejected: { type: Number, default: 0 },
+      redacted: { type: Number, default: 0 },
+      score: { type: Number, default: 100 },
+      destination: { type: String, default: 'personal' },
     },
   },
   { timestamps: true }
