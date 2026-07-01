@@ -68,7 +68,25 @@ Text to analyze:
 ${text}
 """`;
 
-    const result = await model.generateContent(prompt);
+    let result;
+    let retries = 3;
+    let delay = 1000;
+    while (retries > 0) {
+      try {
+        result = await model.generateContent(prompt);
+        break;
+      } catch (e) {
+        if (e.message.includes('503') && retries > 1) {
+          console.warn(`Gemini 503 error. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay *= 2;
+          retries--;
+        } else {
+          throw e;
+        }
+      }
+    }
+    
     const response = result.response.text().trim();
 
     const cleaned = response
