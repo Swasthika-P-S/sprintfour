@@ -259,7 +259,7 @@ export default function Home() {
                   <div className="card-title">Document Inspection</div>
                   <div className="doc-controls">
                     <button className={`btn btn-sm ${xrayMode ? 'btn-primary' : 'btn-outline'}`} onClick={() => setXrayMode(!xrayMode)}>
-                      {xrayMode ? 'Hide Safe Items' : 'X-Ray Mode'}
+                      {xrayMode ? 'Hide Safe Items' : 'Show Safe Items'}
                     </button>
                     <div className="divider"></div>
                     <button className="btn btn-secondary btn-sm" onClick={redactAll}>Hide All PII</button>
