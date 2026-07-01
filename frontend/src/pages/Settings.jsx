@@ -32,7 +32,7 @@ export default function Settings() {
           <div className="setting-row">
             <div>
               <h4 style={{ margin: '0 0 4px', color: 'var(--text-dark)' }}>Auto-Hide Names</h4>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Automatically redact all detected person names (e.g. John Doe, Swasthika).</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Automatically redact all detected person names.</div>
             </div>
             <input type="checkbox" checked={rules.hideNames} onChange={e => setRules({...rules, hideNames: e.target.checked})} className="toggle-checkbox" />
           </div>
