@@ -22,11 +22,11 @@ async function analyzeText(req, res, next) {
     const regexEntities = detectWithRegex(text);
 
     // Step 2: Run Gemini for names/addresses (in parallel, non-blocking)
-    const geminiEntities = await detectWithGemini(text);
+    const { sensitive_entities, safe_entities } = await detectWithGemini(text);
 
     // Step 3: Merge — avoid duplicates (same startIndex)
     const regexPositions = new Set(regexEntities.map((e) => e.startIndex));
-    const filteredGemini = geminiEntities.filter(
+    const filteredGemini = sensitive_entities.filter(
       (e) =>
         !regexPositions.has(e.startIndex) &&
         !regexEntities.some(
@@ -40,6 +40,7 @@ async function analyzeText(req, res, next) {
 
     return res.json({
       entities: allEntities,
+      safeEntities: safe_entities || [],
       total: allEntities.length,
       detectionMethods: {
         regex: regexEntities.length,

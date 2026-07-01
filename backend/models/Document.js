@@ -21,6 +21,7 @@ const documentSchema = new mongoose.Schema(
     originalText: { type: String, required: true },
     redactedText: { type: String, default: '' },
     detectedPII: [piiEntitySchema],
+    safeEntities: [{ text: String, reason: String, startIndex: Number, endIndex: Number }],
     stats: {
       total: { type: Number, default: 0 },
       redacted: { type: Number, default: 0 },

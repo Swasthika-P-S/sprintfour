@@ -6,7 +6,7 @@ const Document = require('../models/Document');
  */
 async function saveDocument(req, res, next) {
   try {
-    const { originalText, redactedText, detectedPII, stats } = req.body;
+    const { originalText, redactedText, detectedPII, safeEntities, stats } = req.body;
 
     if (!originalText) {
       return res.status(400).json({ error: 'originalText is required.' });
@@ -17,6 +17,7 @@ async function saveDocument(req, res, next) {
       originalText,
       redactedText: redactedText || '',
       detectedPII: detectedPII || [],
+      safeEntities: safeEntities || [],
       stats: stats || { total: 0, accepted: 0, rejected: 0 },
     });
 

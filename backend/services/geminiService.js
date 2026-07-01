@@ -9,7 +9,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 async function detectWithGemini(text) {
   if (!apiKey) {
     console.warn('⚠️  GEMINI_API_KEY not set. Skipping AI detection.');
-    return [];
+    return { sensitive_entities: [], safe_entities: [] };
   }
 
   try {
@@ -17,22 +17,35 @@ async function detectWithGemini(text) {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a PII (Personally Identifiable Information) detection expert.
-Analyze the following text (which may be in English, Tamil, or Hindi) and identify ONLY:
-1. Full person names (NAME)
-2. Physical addresses (ADDRESS)
-3. Organization names that could identify someone (ORG)
-4. Indirect Identifiers like Roll Numbers, College Names, Specific Locations, or highly unique Job Titles (INDIRECT)
+Analyze the following text and perform two tasks:
 
-Return the detected text exactly as it appears in the original language.
+TASK 1: Identifiy Sensitive Entities
+Identify Names, Physical Addresses, Organizations, and Indirect Identifiers (like Roll Numbers, Job Titles).
+CRITICAL (Alias Resolution): If you detect the same person or entity referred to by multiple names or nicknames (e.g. "Swasthika" and "Swas"), assign them the EXACT same pseudonym in the "replacement" field (e.g., "[Person A]", "[Person B]"). 
 
-Return a JSON array ONLY (no explanation, no markdown, no code block).
-Each item must have these exact fields:
-- "text": the exact matched text from the input
-- "type": one of "NAME", "ADDRESS", "ORG", "INDIRECT"
-- "confidence": number 0-100
-- "reason": brief explanation of why this is PII
+TASK 2: Identify Safe Entities (X-Ray Mode)
+Identify words that MIGHT look like entities but are 100% safe to keep (e.g. Public company names like "Google", generic locations like "India", common nouns).
 
-If nothing is found, return an empty array: []
+Return a JSON object ONLY (no explanation, no markdown). It must have this exact structure:
+{
+  "sensitive_entities": [
+    {
+      "text": "Exact text from input",
+      "type": "NAME" | "ADDRESS" | "ORG" | "INDIRECT",
+      "confidence": 98,
+      "reason": "Brief explanation of why this is PII",
+      "replacement": "[Person A]" 
+    }
+  ],
+  "safe_entities": [
+    {
+      "text": "Exact text from input",
+      "reason": "Brief explanation of why this is explicitly SAFE to keep"
+    }
+  ]
+}
+
+If nothing is found, return empty arrays.
 
 Text to analyze:
 """
@@ -42,29 +55,21 @@ ${text}
     const result = await model.generateContent(prompt);
     const response = result.response.text().trim();
 
-    // Clean up response (remove code fences if present)
     const cleaned = response
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/\s*```$/i, '')
       .trim();
 
-    const geminiEntities = JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+    const sensitive = parsed.sensitive_entities || [];
+    const safe = parsed.safe_entities || [];
 
-    if (!Array.isArray(geminiEntities)) return [];
-
-    // Add position info and replacement fields
-    return geminiEntities
+    const sensitive_entities = sensitive
       .filter((e) => e.text && e.type && text.includes(e.text))
       .map((e) => {
         const startIndex = text.indexOf(e.text);
         const endIndex = startIndex + e.text.length;
-        const replacementMap = {
-          NAME: '[NAME]',
-          ADDRESS: '[ADDRESS]',
-          ORG: '[ORG]',
-          INDIRECT: '[INDIRECT]',
-        };
         return {
           text: e.text,
           type: e.type,
@@ -72,13 +77,28 @@ ${text}
           reason: e.reason || `Detected by AI as ${e.type}`,
           startIndex,
           endIndex,
-          replacement: replacementMap[e.type] || `[${e.type}]`,
+          replacement: e.replacement || `[${e.type}]`,
           status: 'pending',
         };
       });
+
+    const safe_entities = safe
+      .filter((e) => e.text && text.includes(e.text))
+      .map((e) => {
+        const startIndex = text.indexOf(e.text);
+        const endIndex = startIndex + e.text.length;
+        return {
+          text: e.text,
+          reason: e.reason || "Evaluated as safe.",
+          startIndex,
+          endIndex,
+        };
+      });
+
+    return { sensitive_entities, safe_entities };
   } catch (err) {
     console.error('❌ Gemini API error:', err.message);
-    return []; // Graceful fallback — regex results still work
+    return { sensitive_entities: [], safe_entities: [] };
   }
 }
 

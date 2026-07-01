@@ -245,6 +245,12 @@ function ReviewRow({
         </div>
       )}
 
+      {(entity.reason || entity.confidence) && (
+        <div style={{ fontSize: '0.72rem', color: 'var(--text-faint)', marginTop: 6, fontStyle: 'italic', background: 'var(--background)', padding: '4px 6px', borderRadius: 4 }}>
+          💡 {entity.reason} {entity.confidence ? `(${entity.confidence}%)` : ''}
+        </div>
+      )}
+
       {isEditing ? (
         <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
           <input

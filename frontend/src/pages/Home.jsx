@@ -45,6 +45,8 @@ export default function Home() {
 
   // Analysis state
   const [entities, setEntities] = useState([]);
+  const [safeEntities, setSafeEntities] = useState([]);
+  const [xrayMode, setXrayMode] = useState(false);
   const [redactedSet, setRedactedSet] = useState(new Set());
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzed, setAnalyzed] = useState(false);
@@ -77,6 +79,7 @@ export default function Home() {
     setText(data.text);
     setFileName(data.filename);
     setEntities(data.entities || []);
+    setSafeEntities(data.safeEntities || []);
     setRedactedSet(new Set());
     setIgnoredSet(new Set());
     setTranslatedText(null);
@@ -103,6 +106,7 @@ export default function Home() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEntities(data.entities || []);
+      setSafeEntities(data.safeEntities || []);
       setAnalyzed(true);
       if ((data.entities || []).length === 0) {
         addToast('No PII detected — document looks clean!', 'info');
@@ -197,27 +201,51 @@ export default function Home() {
 
   // ── Interactive clickable document segments ──
   const buildDocSegments = () => {
-    if (!entities.length) return [{ text, idx: null }];
-    const sorted = [...entities]
-      .map((e, idx) => ({ ...e, idx }))
-      .sort((a, b) => (a.startIndex ?? a.start ?? 0) - (b.startIndex ?? b.start ?? 0));
+    if (!entities.length && (!xrayMode || !safeEntities.length)) return [{ text, idx: null }];
+    
+    let combined = [...entities].map((e, idx) => ({ ...e, idx, isSafe: false }));
+    if (xrayMode && safeEntities.length) {
+      combined = [...combined, ...safeEntities.map((e) => ({ ...e, idx: null, isSafe: true }))];
+    }
+    
+    const sorted = combined.sort((a, b) => (a.startIndex ?? a.start ?? 0) - (b.startIndex ?? b.start ?? 0));
+    
+    const nonOverlapping = [];
+    let lastEnd = -1;
+    for (const e of sorted) {
+       const s = e.startIndex ?? e.start ?? 0;
+       const en = e.endIndex ?? e.end ?? 0;
+       if (s >= lastEnd) {
+         nonOverlapping.push(e);
+         lastEnd = en;
+       }
+    }
+
     const segments = [];
     let cursor = 0;
-    for (const e of sorted) {
+    for (const e of nonOverlapping) {
       const s = e.startIndex ?? e.start ?? 0;
       const en = e.endIndex ?? e.end ?? 0;
       if (s > cursor) {
         segments.push({ text: text.slice(cursor, s), idx: null });
       }
-      if (!ignoredSet.has(e.idx)) {
+      if (e.isSafe) {
+        segments.push({
+          text: text.slice(s, en),
+          idx: null,
+          isSafe: true,
+          reason: e.reason
+        });
+      } else if (!ignoredSet.has(e.idx)) {
         segments.push({
           text: text.slice(s, en),
           idx: e.idx,
           isRedacted: redactedSet.has(e.idx),
-          type: e.type
+          type: e.type,
+          reason: e.reason,
+          confidence: e.confidence
         });
       } else {
-        // If ignored, just push as normal text without interaction
         segments.push({ text: text.slice(s, en), idx: null });
       }
       cursor = en;
@@ -323,6 +351,7 @@ export default function Home() {
           originalText: text,
           redactedText,
           detectedPII: entities,
+          safeEntities: safeEntities,
           stats: {
             total: entities.length,
             redacted: redactedSet.size,
@@ -579,6 +608,15 @@ export default function Home() {
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <button
+                      className={`btn btn-sm ${xrayMode ? 'btn-primary' : 'btn-outline'}`}
+                      onClick={() => setXrayMode(!xrayMode)}
+                      title="See what the AI explicitly evaluated as SAFE to keep"
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px' }}
+                    >
+                      <span style={{ fontSize: '1.1rem', marginTop: -2 }}>{xrayMode ? '👀' : '👓'}</span> X-Ray Mode
+                    </button>
+                    <div style={{ height: '24px', width: '1px', background: 'var(--border)' }} />
                     <form onSubmit={handleManualRedact} style={{ display: 'flex', gap: 6 }}>
                       <input
                         type="text"
@@ -621,21 +659,33 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="doc-viewer">
-                      {buildDocSegments().map((seg, i) =>
-                        seg.idx === null ? (
-                          <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{seg.text}</span>
-                        ) : (
+                      {buildDocSegments().map((seg, i) => {
+                        if (seg.idx === null && !seg.isSafe) {
+                          return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{seg.text}</span>;
+                        }
+                        if (seg.isSafe) {
+                          return (
+                            <mark
+                              key={i}
+                              title={`[Evaluated: SAFE] ${seg.reason}`}
+                              style={{ background: 'var(--green-light)', color: 'var(--green-primary)', cursor: 'help', padding: '2px 4px', borderRadius: 4, fontWeight: 500 }}
+                            >
+                              {seg.text}
+                            </mark>
+                          );
+                        }
+                        return (
                           <mark
                             key={i}
                             className={seg.isRedacted ? 'redacted-mark' : ''}
-                            title={seg.isRedacted ? `Click to un-redact (${seg.type})` : `Click to redact (${seg.type})`}
+                            title={`Action: ${seg.isRedacted ? 'Click to un-redact' : 'Click to redact'}\nType: ${seg.type}\nConfidence: ${seg.confidence || 99}%\nReason: ${seg.reason || 'Detected as PII'}`}
                             onClick={() => requestToggleRedact(seg.idx)}
                             style={{ cursor: 'pointer', userSelect: 'none' }}
                           >
                             {seg.text}
                           </mark>
-                        )
-                      )}
+                        );
+                      })}
                     </div>
                   )}
                   <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
