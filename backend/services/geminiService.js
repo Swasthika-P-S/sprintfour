@@ -29,7 +29,7 @@ You MUST provide a unique pseudonym in the "replacement" field for EVERY entity 
 - For names, you MUST strictly use the format "[PERSON-1]", "[PERSON-2]", etc. DO NOT use "[Person A]" or any other format.
 - For specific organizations or places, use a descriptive format like "[REDACTED - hospital 1]".
 - If you detect the same person or entity referred to by multiple names, nicknames, or shorthand, you MUST group them by assigning them the EXACT same pseudonym.
-- CRITICAL ALIAS RULE: If you find a full name (e.g., Alexandra Davis) and ALSO a shorter nickname/first name (e.g., Alex, Alexandra) that might be the same person, put the shorter name ONLY in `suggested_aliases`. DO NOT put the shorter name in `sensitive_entities`. This allows the UI to explicitly ask the user to confirm the link.
+- CRITICAL ALIAS RULE: If you find a full name (e.g., Alexandra Davis) and ALSO a shorter nickname/first name (e.g., Alex, Alexandra) that might be the same person, put the shorter name ONLY in 'suggested_aliases'. DO NOT put the shorter name in 'sensitive_entities'. This allows the UI to explicitly ask the user to confirm the link.
 
 Return a JSON object ONLY (no explanation, no markdown). It must have this exact structure:
 {
@@ -108,12 +108,12 @@ ${text}
           text: e.text,
           type: e.type,
           confidence: e.confidence || 80,
-          reason: e.reason || \`Detected by AI as \${e.type}\`,
+          reason: e.reason || `Detected by AI as ${e.type}`,
           evidence: e.evidence || ["AI Contextual Match"],
           privacy_risk: e.privacy_risk || "Data Exposure",
           startIndex,
           endIndex,
-          replacement: e.replacement || \`[\${e.type}]\`,
+          replacement: e.replacement || `[${e.type}]`,
           status: 'pending',
         };
       });
