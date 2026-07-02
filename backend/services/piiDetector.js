@@ -104,6 +104,14 @@ const PII_PATTERNS = [
     reason: 'Matched contextual Name prefix',
     replacement: '[PERSON-REGEX]',
   },
+  {
+    type: 'NAME',
+    // Fallback: matches 2 or 3 capitalized words (e.g. Arun Kumar) when contextual prefix is missing
+    pattern: /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g,
+    confidence: 60,
+    reason: 'Capitalized name candidate (fallback)',
+    replacement: '[PERSON-REGEX]',
+  },
 ];
 
 
