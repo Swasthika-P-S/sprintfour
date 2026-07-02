@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  jwt.sign({ id }, process.env.JWT_SECRET || 'privacylens_super_secret_key_2024_hackathon', { expiresIn: '7d' });
 
 // POST /api/auth/register
 async function register(req, res, next) {

@@ -9,7 +9,7 @@ async function protect(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Not authenticated. Please sign in.' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'privacylens_super_secret_key_2024_hackathon');
     req.user = await User.findById(decoded.id).select('-password');
     if (!req.user) return res.status(401).json({ error: 'User not found.' });
     next();
