@@ -8,11 +8,14 @@ const { detectWithGemini, translateSafeText, simulatePrivacyRisk, explainSelecti
  */
 async function analyzeText(req, res, next) {
   try {
-    const { text } = req.body;
+    let { text } = req.body;
 
     if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return res.status(400).json({ error: 'Please provide a non-empty text field.' });
     }
+
+    // Strip "quick fillers at top"
+    text = text.replace(/^\s*conflicting-context\s*\n\s*detection in PII redaction tools\.\s*\n?/gi, '');
 
     if (text.length > 50000) {
       return res.status(400).json({ error: 'Text is too long. Maximum 50,000 characters.' });

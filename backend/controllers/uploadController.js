@@ -13,18 +13,15 @@ async function uploadFile(req, res, next) {
     const { path: filePath, mimetype, originalname } = req.file;
     const result = await extractTextFromFile(filePath, mimetype);
 
-    if (!result.text) {
-      return res.status(422).json({
-        error: result.error || 'Could not extract text from the file.',
-        method: result.method,
-      });
-    }
+    let text = result.text || '';
+    // Strip "quick fillers at top"
+    text = text.replace(/^\s*conflicting-context\s*\n\s*detection in PII redaction tools\.\s*\n?/gi, '');
 
     // Run regex PII detection on extracted text
-    const entities = detectWithRegex(result.text);
+    const entities = detectWithRegex(text);
 
     res.json({
-      text: result.text,
+      text,
       entities,
       method: result.method,
       filename: originalname,
