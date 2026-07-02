@@ -58,6 +58,18 @@
 .entity-mark.redacted:hover {
   background: #333;
 }
+.entity-mark.safe-visible {
+  background: rgba(52, 211, 153, 0.05);
+  color: inherit;
+}
+.entity-mark.safe-visible:hover {
+  background: rgba(52, 211, 153, 0.12);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.15);
+}
+.entity-mark.safe-visible.selected {
+  background: rgba(52, 211, 153, 0.15);
+  border-bottom: 2px dashed var(--conf-green) !important;
+}
 
 .safe-mark {
   background: var(--conf-green-bg);

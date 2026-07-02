@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Shield, AlertTriangle, CheckCircle, EyeOff } from 'lucide-react';
 
 export default function TrustDashboard({ metrics }) {
-  // metrics = { totalFound, hidden, reviewRequired, humanApproved, score }
+  // metrics = { totalFound, hidden, reviewRequired, humanApproved, keptVisible, score }
   
   return (
     <div className="trust-dashboard">
@@ -22,6 +22,9 @@ export default function TrustDashboard({ metrics }) {
         <MetricCard icon={<EyeOff color="var(--conf-green)" />} label="Hidden" value={metrics.hidden} />
         <MetricCard icon={<AlertTriangle color="var(--conf-orange)" />} label="Needs Review" value={metrics.reviewRequired} />
         <MetricCard icon={<CheckCircle color="var(--text-dark)" />} label="Human Approved" value={metrics.humanApproved} />
+        {(metrics.keptVisible ?? 0) > 0 && (
+          <MetricCard icon={<CheckCircle color="var(--conf-green)" />} label="Kept Visible" value={metrics.keptVisible} />
+        )}
       </div>
 
     </div>

@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import FileUpload from '../components/FileUpload';
 import PrivacyScore, { computePrivacyScore } from '../components/PrivacyScore';
-import PrivacyCertificate from '../components/PrivacyCertificate';
-import PrivacySimulation from '../components/PrivacySimulation';
-import ContextSelector, { CONTEXTS } from '../components/ContextSelector';
 import Timeline from '../components/Timeline';
 import ExplainabilityPanel from '../components/ExplainabilityPanel';
 import TrustDashboard from '../components/TrustDashboard';
 import AuditReport from '../components/AuditReport';
 import ReviewQueue from '../components/ReviewQueue';
 import AliasResolver from '../components/AliasResolver';
+import IntegrityVerifier from '../components/IntegrityVerifier';
+import RedTeamPanel from '../components/RedTeamPanel';
+import InterrogationChat from '../components/InterrogationChat';
 
 import { useAuth } from '../context/AuthContext';
 import { useLanguage, LANGUAGES } from '../context/LanguageContext';
-import { EyeOff, Eye, FileText, FileJson, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { EyeOff, Eye, FileText, ShieldAlert, ShieldCheck, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const API = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
 
@@ -42,25 +42,19 @@ export default function Home() {
   const [fileName, setFileName] = useState('');
 
   const [entities, setEntities] = useState([]);
+  const [safeEntities, setSafeEntities] = useState([]);       // Entities kept visible
   const [redactedSet, setRedactedSet] = useState(new Set());
   const [ignoredSet, setIgnoredSet] = useState(new Set());
+  const [showKeptVisible, setShowKeptVisible] = useState(false); // Toggle for safe entity highlights
   
   // Processing States
-  const [analyzing, setAnalyzing] = useState(false);
   const [analyzed, setAnalyzed] = useState(false);
   const [timelineStep, setTimelineStep] = useState(-1);
 
-  // Translation & Simulation
-  const [translatedText, setTranslatedText] = useState(null);
-  const [viewMode, setViewMode] = useState('original');
-  const [simulationResult, setSimulationResult] = useState(null);
-  const [simulating, setSimulating] = useState(false);
-
-  const [context, setContext] = useState('healthcare');
-  const [showCertificate, setShowCertificate] = useState(false);
+  const [context] = useState('healthcare');
   const [toasts, setToasts] = useState([]);
 
-  // New Explainability State
+  // Explainability State
   const [selectedEntity, setSelectedEntity] = useState(null);
   const [aliasSuggestions, setAliasSuggestions] = useState([]);
 
@@ -74,11 +68,13 @@ export default function Home() {
     setText(data.text);
     setFileName(data.filename);
     setEntities([]);
+    setSafeEntities([]);
     setRedactedSet(new Set());
     setIgnoredSet(new Set());
     setSelectedEntity(null);
     setAliasSuggestions([]);
     setAnalyzed(false);
+    setShowKeptVisible(false);
     
     // Start Timeline Animation
     setTimelineStep(0);
@@ -101,16 +97,25 @@ export default function Home() {
       setTimeout(() => {
         setTimelineStep(4);
         setTimeout(() => {
-          setEntities(data.entities || []);
+          const fetchedEntities = data.entities || [];
+          const fetchedSafe = data.safeEntities || [];
+          setEntities(fetchedEntities);
+          setSafeEntities(fetchedSafe);
           setAliasSuggestions(data.suggested_aliases || []);
+          // Auto-redact all high-confidence entities (>= 80%)
+          const autoRedact = new Set();
+          fetchedEntities.forEach((e, i) => { if (e.confidence >= 80) autoRedact.add(i); });
+          setRedactedSet(autoRedact);
           setAnalyzed(true);
           setTimelineStep(-1);
-          if (data.entities && data.entities.length > 0) {
-            setSelectedEntity({ ...data.entities[0], idx: 0 });
+          if (fetchedEntities.length > 0) {
+            setSelectedEntity({ ...fetchedEntities[0], idx: 0 });
+          } else if (fetchedSafe.length > 0) {
+            setSelectedEntity({ ...fetchedSafe[0], isSafe: true, safeIdx: 0 });
           }
-          addToast(`Analysis complete. Click any highlighted entity to inspect AI reasoning.`);
+          addToast(`Analysis complete — ${fetchedEntities.length} sensitive, ${fetchedSafe.length} evaluated & kept visible. Click any highlighted word to inspect.`);
         }, 800);
-      }, 1500); // Pad delay for smooth animation
+      }, 1500);
 
     } catch (err) {
       setTimelineStep(-1);
@@ -226,20 +231,25 @@ export default function Home() {
   };
 
   const buildDocSegments = () => {
-    if (!entities.length) return [{ text, idx: null }];
-    
-    let combined = [...entities].map((e, idx) => ({ ...e, idx, isSafe: false }));
-    
-    const sorted = combined.sort((a, b) => (a.startIndex ?? a.start ?? 0) - (b.startIndex ?? b.start ?? 0));
+    // Merge sensitive + safe entities into one sorted, non-overlapping list
+    const sensitiveItems = entities.map((e, idx) => ({ ...e, idx, isSafe: false }));
+    const safeItems = showKeptVisible
+      ? safeEntities.map((e, safeIdx) => ({ ...e, safeIdx, isSafe: true, idx: null }))
+      : [];
+
+    const allItems = [...sensitiveItems, ...safeItems].sort(
+      (a, b) => (a.startIndex ?? a.start ?? 0) - (b.startIndex ?? b.start ?? 0)
+    );
+
     const nonOverlapping = [];
     let lastEnd = -1;
-    for (const e of sorted) {
-       const s = e.startIndex ?? e.start ?? 0;
-       const en = e.endIndex ?? e.end ?? 0;
-       if (s >= lastEnd) {
-         nonOverlapping.push(e);
-         lastEnd = en;
-       }
+    for (const e of allItems) {
+      const s = e.startIndex ?? e.start ?? 0;
+      const en = e.endIndex ?? e.end ?? 0;
+      if (s >= lastEnd && en > s) {
+        nonOverlapping.push(e);
+        lastEnd = en;
+      }
     }
 
     const segments = [];
@@ -247,14 +257,11 @@ export default function Home() {
     for (const e of nonOverlapping) {
       const s = e.startIndex ?? e.start ?? 0;
       const en = e.endIndex ?? e.end ?? 0;
-      if (s > cursor) {
-        segments.push({ text: text.slice(cursor, s), idx: null });
-      }
+      if (s > cursor) segments.push({ text: text.slice(cursor, s), idx: null });
       segments.push({
         ...e,
         text: text.slice(s, en),
-        idx: e.idx,
-        isRedacted: redactedSet.has(e.idx)
+        isRedacted: !e.isSafe && redactedSet.has(e.idx)
       });
       cursor = en;
     }
@@ -287,19 +294,47 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDownloadJSON = () => {
-    const data = {
-      original: text,
-      redacted: generateRedactedText(),
-      entities_hidden: entities.filter((_, i) => redactedSet.has(i)).map(e => ({ text: e.text, type: e.type, replacement: e.replacement }))
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const handleDownloadPDF = () => {
+    const redacted = generateRedactedText();
+    const hiddenEntities = entities.filter((_, i) => redactedSet.has(i));
+    const lines = [
+      '================================================',
+      'VEILIQ — REDACTED DOCUMENT EXPORT',
+      `Generated: ${new Date().toLocaleString()}`,
+      `File: ${fileName || 'Untitled'}`,
+      '================================================',
+      '',
+      'REDACTED DOCUMENT:',
+      '-------------------',
+      ...redacted.split('\n'),
+      '',
+      '================================================',
+      'REDACTION SUMMARY',
+      '================================================',
+      `Total entities detected:    ${entities.length}`,
+      `Entities redacted:          ${hiddenEntities.length}`,
+      `Entities kept visible:      ${safeEntities.length} (evaluated & approved)`,
+      '',
+      'REDACTED ENTITIES:',
+      ...hiddenEntities.map(e => `  • ${e.replacement || '[REDACTED]'} ← was: ${e.type} (${e.confidence}% confidence)`),
+      '',
+      'ENTITIES EVALUATED & KEPT VISIBLE:',
+      ...safeEntities.map(e => `  • "${e.text}" — ${e.reason}`),
+      '',
+      '================================================',
+      'This report was generated by VEILiq.',
+      'Every redaction decision is logged and auditable.',
+      '================================================',
+    ].join('\n');
+
+    const blob = new Blob([lines], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `redacted_data_${Date.now()}.json`;
+    a.download = `VEILiq_Redacted_${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    addToast('Redacted report downloaded!', 'success');
   };
 
   return (
@@ -326,6 +361,7 @@ export default function Home() {
                   <div className="card-title">Document Inspection</div>
                   <div className="doc-controls" style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%' }}>
                     
+                    {/* Quick Filters by entity type */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', marginRight: 8 }}>Quick Filters:</span>
                       {[...new Set(entities.map(e => e.type))].map(type => (
@@ -350,6 +386,19 @@ export default function Home() {
                           <EyeOff size={14} /> Hide {type}
                         </button>
                       ))}
+                      {/* Show/Hide kept-visible toggle */}
+                      {safeEntities.length > 0 && (
+                        <button className="btn-sm" style={{
+                          background: showKeptVisible ? 'rgba(52,211,153,0.15)' : 'var(--bg-muted)',
+                          color: showKeptVisible ? 'var(--conf-green)' : 'var(--text-dark)',
+                          border: `1px solid ${showKeptVisible ? 'var(--conf-green)' : 'var(--border)'}`,
+                          borderRadius: 20, padding: '4px 12px', fontSize: '0.8rem',
+                          display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', transition: 'all 0.2s'
+                        }} onClick={() => setShowKeptVisible(v => !v)}>
+                          {showKeptVisible ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                          {showKeptVisible ? `Hide ${safeEntities.length} Safe` : `Show ${safeEntities.length} Kept Visible`}
+                        </button>
+                      )}
                     </div>
                     
                     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-muted)', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border)' }}>
@@ -366,8 +415,8 @@ export default function Home() {
                         <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={handleDownloadTXT}>
                           <FileText size={16} /> Save TXT
                         </button>
-                        <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={handleDownloadJSON}>
-                          <FileJson size={16} /> Save JSON
+                        <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px' }} onClick={handleDownloadPDF}>
+                          <FileText size={16} /> Export Report
                         </button>
                       </div>
                     </div>
@@ -377,19 +426,21 @@ export default function Home() {
                 <div className="card-body">
                   <div className="doc-viewer premium-viewer">
                     {buildDocSegments().map((seg, i) => {
+                      // Plain text segments
                       if (seg.idx === null && !seg.isSafe) {
                         return <span key={i}>{seg.text}</span>;
                       }
                       
-                      const isSelected = selectedEntity?.text === seg.text && selectedEntity?.idx === seg.idx;
-                      const confColor = getConfidenceColor(seg.confidence);
+                      const isSelected = selectedEntity?.idx === seg.idx && !seg.isSafe ||
+                        (seg.isSafe && selectedEntity?.isSafe && selectedEntity?.text === seg.text);
+                      const confColor = seg.isSafe ? 'var(--conf-green)' : getConfidenceColor(seg.confidence);
                       
                       return (
                         <mark
                           key={i}
                           title={seg.reason}
-                          className={`entity-mark ${seg.isRedacted ? 'redacted' : ''} ${isSelected ? 'selected' : ''}`}
-                          style={{ borderBottom: `2px solid ${confColor}` }}
+                          className={`entity-mark ${seg.isRedacted ? 'redacted' : ''} ${isSelected ? 'selected' : ''} ${seg.isSafe ? 'safe-visible' : ''}`}
+                          style={{ borderBottom: `2px ${seg.isSafe ? 'dashed' : 'solid'} ${confColor}` }}
                           onClick={() => handleEntityClick(seg)}
                         >
                           {seg.isRedacted ? (seg.replacement || `[${seg.type}]`) : seg.text}
@@ -407,6 +458,7 @@ export default function Home() {
                 hidden: redactedSet.size,
                 reviewRequired: entities.filter(e => e.confidence < 90).length,
                 humanApproved: ignoredSet.size,
+                keptVisible: safeEntities.length,
                 score: computePrivacyScore(entities.filter((_, i) => !redactedSet.has(i)), context)
               }} />
 
@@ -432,16 +484,40 @@ export default function Home() {
                     Keep Visible
                   </button>
                   <button className="btn btn-primary" onClick={() => toggleRedact(selectedEntity.idx)}>
-                    {selectedEntity.isRedacted ? 'Un-Hide' : 'Hide Anyway'}
+                    {redactedSet.has(selectedEntity.idx) ? 'Un-Hide' : 'Hide Anyway'}
                   </button>
                 </div>
               )}
+
+              <IntegrityVerifier
+                originalText={text}
+                redactedText={generateRedactedText()}
+                entities={entities}
+                redactedIndices={[...redactedSet]}
+                token={token}
+              />
+
+              <RedTeamPanel
+                redactedText={generateRedactedText()}
+                entities={entities}
+                redactedIndices={[...redactedSet]}
+                token={token}
+              />
+
+              <InterrogationChat
+                entities={entities}
+                safeEntities={safeEntities}
+                redactedIndices={[...redactedSet]}
+                aliasSuggestions={aliasSuggestions}
+                token={token}
+              />
+
             </div>
           </div>
         )}
 
         {analyzed && text && (
-          <AuditReport entities={entities} safeEntities={[]} />
+          <AuditReport entities={entities} safeEntities={safeEntities} redactedSet={redactedSet} />
         )}
       </div>
     </>

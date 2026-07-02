@@ -25,6 +25,8 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/policies', policyRoutes);
+app.use('/api/verify', require('./routes/verify'));
+app.use('/api/chat', require('./routes/chat'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'VEILiq' }));

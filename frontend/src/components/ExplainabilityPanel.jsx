@@ -28,13 +28,22 @@ export default function ExplainabilityPanel({ selectedEntity }) {
     >
       <div className="card-header" style={{ borderBottom: '1px solid var(--border-glass)', paddingBottom: 20, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div className="icon-glass-wrapper" style={{ background: isSafe ? 'var(--conf-green-bg)' : 'var(--conf-red-bg)', color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)', boxShadow: isSafe ? 'var(--shadow-glow)' : 'var(--shadow-glow-red)' }}>
+          <div className="icon-glass-wrapper" style={{
+            background: isSafe ? 'rgba(52,211,153,0.1)' : 'var(--conf-red-bg)',
+            color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)',
+            boxShadow: isSafe ? 'var(--shadow-glow)' : 'var(--shadow-glow-red)'
+          }}>
             {isSafe ? <ShieldCheck size={28} /> : <ShieldAlert size={28} />}
           </div>
           <div>
             <div className="entity-text gradient-text" style={{ fontSize: '1.4rem' }}>{selectedEntity.text}</div>
-            <div className="decision-badge" style={{ background: isSafe ? 'var(--conf-green-bg)' : 'var(--conf-red-bg)', color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)', borderColor: isSafe ? 'var(--conf-green)' : 'var(--conf-red)' }}>
-              Decision: {isSafe ? 'VISIBLE' : 'HIDDEN'}
+            <div className="decision-badge" style={{
+              background: isSafe ? 'rgba(52,211,153,0.1)' : 'var(--conf-red-bg)',
+              color: isSafe ? 'var(--conf-green)' : 'var(--conf-red)',
+              borderColor: isSafe ? 'var(--conf-green)' : 'var(--conf-red)',
+              border: '1px solid'
+            }}>
+              Decision: {isSafe ? 'KEPT VISIBLE' : 'HIDDEN'}
             </div>
           </div>
         </div>
@@ -58,7 +67,14 @@ export default function ExplainabilityPanel({ selectedEntity }) {
         <p className="reason-text" style={{ margin: 0 }}>{selectedEntity.reason}</p>
       </div>
 
-      {!isSafe && (
+      {isSafe ? (
+        <div className="glass-box" style={{ borderLeft: '3px solid var(--conf-green)', marginBottom: 24 }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--conf-green)', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <ShieldCheck size={16} style={{ marginTop: 2, flexShrink: 0 }} />
+            <span>This entity was evaluated by the AI and deliberately <strong>kept visible</strong>. The AI found no significant privacy risk associated with including it in the output.</span>
+          </p>
+        </div>
+      ) : (
         <>
           <div className="section-title">Privacy Risk (If leaked)</div>
           <div className="glass-box risk-box" style={{ marginBottom: 24, borderLeft: '4px solid var(--red)' }}>

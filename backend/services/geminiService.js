@@ -213,4 +213,128 @@ ${redactedText}
   }
 }
 
-module.exports = { detectWithGemini, translateSafeText, simulatePrivacyRisk };
+/**
+ * Adversarial re-identification check — tries to re-identify redacted entities from context.
+ */
+async function redTeamCheck(redactedText, entities) {
+  if (!apiKey) {
+    return { reidentification_risks: [] };
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: { responseMimeType: 'application/json' }
+  });
+
+  const replacements = [...new Set(entities.map(e => e.replacement).filter(Boolean))];
+
+  const prompt = `You are a hostile privacy attacker performing a red-team re-identification analysis.
+
+Your task: Given the redacted document below, try to re-identify what each redacted token (e.g., [PERSON-1], [ORG-1]) refers to, using ONLY the surrounding unredacted context clues.
+
+For each unique redaction token found in the text, provide:
+- The redaction token (e.g., "[PERSON-1]")
+- A risk_score from 0 to 100 (how likely an attacker could identify the real entity)
+- leaking_context: a short phrase explaining what surrounding text is doing the leaking
+- suggestion: what additional text should also be redacted to reduce this risk
+
+Return ONLY a JSON object:
+{
+  "reidentification_risks": [
+    {
+      "replacement": "[PERSON-1]",
+      "risk_score": 75,
+      "leaking_context": "'the CEO of a Boston fintech founded in 2019' narrows identity to a small set",
+      "suggestion": "Also redact 'Boston', 'fintech', and 'founded in 2019'"
+    }
+  ]
+}
+
+Redacted document:
+"""
+${redactedText}
+"""`;
+
+  let result;
+  let retries = 3;
+  let delay = 1000;
+  while (retries > 0) {
+    try {
+      result = await model.generateContent(prompt);
+      break;
+    } catch (e) {
+      if (e.message.includes('503') && retries > 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2;
+        retries--;
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  const response = result.response.text().trim()
+    .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  try {
+    return JSON.parse(response);
+  } catch (err) {
+    console.error('Red team parse error:', response);
+    return { reidentification_risks: [] };
+  }
+}
+
+/**
+ * Grounded interrogation chat — answers questions about this specific document's redaction decisions.
+ */
+async function interrogationChat(question, metadata) {
+  if (!apiKey) {
+    return { answer: 'AI service is unavailable. Please check the API key.' };
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  const metaSummary = JSON.stringify({
+    entities_hidden: (metadata.entities || []).filter((_, i) => (metadata.redactedIndices || []).includes(i)).map(e => ({ text: e.text, type: e.type, confidence: e.confidence, reason: e.reason, replacement: e.replacement })),
+    entities_kept_visible: (metadata.safeEntities || []).map(e => ({ text: e.text, reason: e.reason, confidence: e.confidence })),
+    alias_resolutions: metadata.aliasSuggestions || [],
+  }, null, 2);
+
+  const prompt = `You are VEILiq, a document privacy assistant. You have access to the following redaction metadata for a specific document that was just analyzed:
+
+--- REDACTION METADATA ---
+${metaSummary}
+--- END METADATA ---
+
+Your ONLY job is to answer questions about THIS document's redaction decisions, using the metadata above as your sole source of truth. 
+Do NOT answer general questions unrelated to this document's redaction data.
+If a question is unrelated, respond exactly: "I can only answer questions about this document's specific redaction decisions."
+
+Be concise, clear, and direct. Reference specific entity names and reasons from the metadata in your answer.
+
+User question: "${question}"`;
+
+  let result;
+  let retries = 3;
+  let delay = 1000;
+  while (retries > 0) {
+    try {
+      result = await model.generateContent(prompt);
+      break;
+    } catch (e) {
+      if (e.message.includes('503') && retries > 1) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2;
+        retries--;
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  return { answer: result.response.text().trim() };
+}
+
+module.exports = { detectWithGemini, translateSafeText, simulatePrivacyRisk, redTeamCheck, interrogationChat };
