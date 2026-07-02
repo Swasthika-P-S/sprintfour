@@ -33,8 +33,6 @@ app.use('/api/chat', require('./routes/chat'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', app: 'VEILiq' }));
 
-const path = require('path');
-
 // Error handler (must be last api middleware)
 app.use(errorHandler);
 
