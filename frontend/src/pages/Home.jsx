@@ -21,7 +21,7 @@ import SandboxOnboarding from '../components/SandboxOnboarding';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage, LANGUAGES } from '../context/LanguageContext';
 
-const API = import.meta.env.PROD ? '/api' : 'http://localhost:5000/api';
+const API = import.meta.env.PROD ? '/api' : 'http://localhost:7860/api';
 
 function Toast({ toasts }) {
   return (
