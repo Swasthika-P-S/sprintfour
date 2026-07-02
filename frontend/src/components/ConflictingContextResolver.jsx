@@ -12,12 +12,12 @@ export default function ConflictingContextResolver({ conflicts, onResolve }) {
         </div>
         <div>
           <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            Possible Different People — Same Name Detected
+            Possible Different Entities — Same Name Detected
             <span style={{ background: '#F59E0B', color: '#000', padding: '2px 8px', borderRadius: 12, fontSize: '0.75rem', fontWeight: 700 }}>
               {conflicts.length}
             </span>
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>We found conflicting facts for this name. Are they the same person?</div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>We found conflicting facts for this entity. Are they referring to the same thing/person?</div>
         </div>
       </div>
       <div>

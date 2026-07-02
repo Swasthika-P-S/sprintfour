@@ -129,13 +129,14 @@ export default function Home() {
                    const snippetStart = Math.max(0, s - 30);
                    const snippetEnd = Math.min(docText.length, e + 30);
                    const snippet = docText.substring(snippetStart, snippetEnd).replace(/\n/g, ' ');
+                   const cType = conflict.type || 'ENTITY';
                    allFetchedEntities.push({
                      text: occ.text,
-                     type: 'NAME',
+                     type: cType,
                      confidence: 70, // lower confidence forces human review
                      reason: `Conflicting context. Snippet: "...${snippet}..."`,
                      privacy_risk: 'Identity Tracking',
-                     replacement: `[PERSON-X${Math.floor(Math.random()*100)}]`,
+                     replacement: `[${cType}-X${Math.floor(Math.random()*100)}]`,
                      startIndex: s,
                      endIndex: e
                    });
@@ -419,11 +420,12 @@ export default function Home() {
       updated = updated.map(ent => {
         if (ent.text.toLowerCase() === conflict.name.toLowerCase()) {
           madeChanges = true;
+          const cType = conflict.type || 'ENTITY';
           if (decision === 'MERGE') {
-            return { ...ent, replacement: '[PERSON-1]', confidence: 99, reason: 'User confirmed same person despite conflicting context.' };
+            return { ...ent, replacement: `[${cType}-1]`, confidence: 99, reason: 'User confirmed same entity despite conflicting context.' };
           } else if (decision === 'SPLIT') {
             // Assign a unique pseudonym per occurrence
-            return { ...ent, replacement: `[PERSON-X${Math.floor(Math.random()*100)}]`, confidence: 99, reason: 'User confirmed different people.' };
+            return { ...ent, replacement: `[${cType}-X${Math.floor(Math.random()*100)}]`, confidence: 99, reason: 'User confirmed different entities.' };
           } else if (decision === 'UNSURE') {
             return { ...ent, confidence: 50, reason: 'Flagged for manual review due to conflicting context.' };
           }
@@ -443,13 +445,14 @@ export default function Home() {
              return (s >= es && s < ee) || (e > es && e <= ee) || (s <= es && e >= ee);
           });
           if (!overlaps) {
-             let rep = '[PERSON-1]';
+             const cType = conflict.type || 'ENTITY';
+             let rep = `[${cType}-1]`;
              let conf = 99;
-             let reason = 'User confirmed same person.';
+             let reason = 'User confirmed same entity.';
              
              if (decision === 'SPLIT') {
-               rep = `[PERSON-X${Math.floor(Math.random()*100)}]`;
-               reason = 'User confirmed different people.';
+               rep = `[${cType}-X${Math.floor(Math.random()*100)}]`;
+               reason = 'User confirmed different entities.';
              } else if (decision === 'UNSURE') {
                conf = 50;
                reason = 'Flagged for manual review.';

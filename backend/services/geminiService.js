@@ -46,8 +46,8 @@ CRITICAL DETECTION RULES:
 1. ADDRESSES: Treat a full multi-line or comma-separated address (e.g., "24 Lakeview Residency, MG Road, Bengaluru, Karnataka 560001") as ONE single ADDRESS entity. Do not split it. Also, flag standalone PIN codes (e.g. "560001") as INDIRECT if they appear without context.
 2. LABELED FIELDS: Treat values following labels like "Full Name:", "Witness:", "Account Holder:", "Claimant:" as EXTREMELY HIGH confidence PII.
 3. UPI IDs vs EMAILS: Distinguish UPI IDs (e.g., "name@fnb", "name@okhdfcbank") from true EMAIL addresses. Tag them as type "UPI_ID", not EMAIL.
-4. CONSISTENCY RULE: If the same full name appears multiple times in the document, you MUST assign it the SAME replacement pseudonym every time. The "text" field MUST contain ONLY the exact entity name (e.g. "Arun Kumar") and NEVER any surrounding context or punctuation. Do a second pass across the full text to confirm every occurrence of each detected name is included in sensitive_entities with matching replacement values.
-5. CONFLICTING CONTEXT RULE: If the same name appears multiple times in the document, check the immediately surrounding context for each occurrence. If you find factual attributes attached to that name which conflict or are mutually exclusive across occurrences (e.g. different ages, different addresses, different ID numbers attached to the same name), do NOT assume they are the same person. Instead, return this as an entry in a new "conflicting_context" array. DO NOT put this name in the "sensitive_entities" array at all. However, if this conflicting name is ALSO a shorter nickname/first name of a full name found in the document (e.g., "Arun" and "Arun Kumar"), you MUST ALSO add it to the 'suggested_aliases' array linked to that full name.
+4. CONSISTENCY RULE: If the same entity (name, organization, address, etc.) appears multiple times in the document, you MUST assign it the SAME replacement pseudonym every time. The "text" field MUST contain ONLY the exact entity text and NEVER any surrounding context or punctuation. Do a second pass across the full text to confirm every occurrence of each detected entity is included in sensitive_entities with matching replacement values.
+5. CONFLICTING CONTEXT RULE: If the same entity appears multiple times in the document, check the immediately surrounding context for each occurrence. If you find factual attributes attached to that entity which conflict or are mutually exclusive across occurrences (e.g. different ages, different addresses, different ID numbers attached to the same name or organization), do NOT assume they are the exact same entity. Instead, return this as an entry in a new "conflicting_context" array. DO NOT put this entity in the "sensitive_entities" array at all. However, if this conflicting entity is ALSO a shorter nickname/first name of a full name found in the document (e.g., "Arun" and "Arun Kumar"), you MUST ALSO add it to the 'suggested_aliases' array linked to that full name.
 6. NON-PII RULE: Do NOT redact or flag academic performance metrics like GPA, grades, or exam scores. These are NOT considered Personally Identifiable Information on their own. If you see a GPA or grade, DO NOT put it in 'sensitive_entities'.
 
 Return a JSON object ONLY (no explanation, no markdown). It must have this exact structure:
@@ -74,11 +74,12 @@ Return a JSON object ONLY (no explanation, no markdown). It must have this exact
   "conflicting_context": [
     {
       "name": "Arun",
+      "type": "NAME",
       "occurrences": [
         { "text": "Arun lives in Mumbai", "context_snippet": "...Arun is based in Mumbai..." },
         { "text": "Arun resides in Delhi", "context_snippet": "...Arun's Delhi address..." }
       ],
-      "conflict_reason": "Same name associated with two mutually exclusive addresses",
+      "conflict_reason": "Same entity associated with two mutually exclusive addresses",
       "confidence": 70
     }
   ],
