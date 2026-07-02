@@ -1,7 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const apiKey = process.env.GEMINI_API_KEY;
-
 /**
  * Use Gemini to detect Names and Addresses that regex can't catch.
  * Returns an array of entity objects.
@@ -20,6 +18,7 @@ function findAllOccurrences(haystack, needle) {
 }
 
 async function detectWithGemini(text) {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.warn('⚠️  GEMINI_API_KEY not set. Skipping AI detection.');
     return { sensitive_entities: [], safe_entities: [] };
@@ -197,6 +196,7 @@ ${text}
  * Translates text to the specified target language safely.
  */
 async function translateSafeText(text, targetLanguage = 'English') {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not set. Cannot translate.');
   }
@@ -222,6 +222,7 @@ ${text}
  * Simulates privacy risk (re-identification) based on redacted text and context.
  */
 async function simulatePrivacyRisk(redactedText, context = 'Personal (Default)') {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY is not set. Cannot run privacy simulation.');
   }
@@ -269,6 +270,7 @@ ${redactedText}
  * Adversarial re-identification check — tries to re-identify redacted entities from context.
  */
 async function redTeamCheck(redactedText, entities) {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return { reidentification_risks: [] };
   }
@@ -341,6 +343,7 @@ ${redactedText}
  * Grounded interrogation chat — answers questions about this specific document's redaction decisions.
  */
 async function interrogationChat(question, metadata) {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return { answer: 'AI service is unavailable. Please check the API key.' };
   }

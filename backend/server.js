@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config(); // Fallback to current directory
 
 const analyzeRoutes = require('./routes/analyze');
 const documentRoutes = require('./routes/documents');
