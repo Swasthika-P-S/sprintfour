@@ -43,7 +43,7 @@ const PII_PATTERNS = [
     type: 'DATE_OF_BIRTH',
     pattern: /\b((?:0?[1-9]|[12][0-9]|3[01])[\/\-](?:0?[1-9]|1[0-2])[\/\-](?:19|20)\d{2}|(?:19|20)\d{2}[\/\-](?:0?[1-9]|1[0-2])[\/\-](?:0?[1-9]|[12][0-9]|3[01])|(?:0?[1-9]|[12][0-9]|3[01])\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(?:19|20)\d{2})\b/gi,
     confidence: 95,
-    reason: 'Matched date of birth pattern',
+    reason: 'Matched date pattern',
     replacement: '[DOB]',
   },
   {
@@ -96,22 +96,6 @@ const PII_PATTERNS = [
     reason: 'Matched phone number format',
     replacement: '[PHONE]',
   },
-  {
-    type: 'NAME',
-    // Contextual regex: matches exactly 1 or 2 capitalized words after specific keywords
-    pattern: /(?:Name|Holder|Witness|Mr\.|Mrs\.|Ms\.|Dr\.)[\s:]+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/g,
-    confidence: 95,
-    reason: 'Matched contextual Name prefix',
-    replacement: '[PERSON-REGEX]',
-  },
-  {
-    type: 'NAME',
-    // Fallback: matches 2 or 3 capitalized words (e.g. Arun Kumar) when contextual prefix is missing
-    pattern: /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/g,
-    confidence: 60,
-    reason: 'Capitalized name candidate (fallback)',
-    replacement: '[PERSON-REGEX]',
-  },
 ];
 
 
@@ -136,14 +120,31 @@ function detectWithRegex(text) {
       );
       if (isOverlapping) continue;
 
+      let finalType = type;
+      let finalReplacement = replacement;
+      let finalReason = reason;
+      let finalConfidence = confidence;
+
+      // Context-aware Date check (Bug 3)
+      if (type === 'DATE_OF_BIRTH') {
+        const precedingContext = text.substring(Math.max(0, startIndex - 35), startIndex).toLowerCase();
+        const hasDOBContext = /(?:born\s+on|date\s+of\s+birth|dob|birth|born\s+in)/i.test(precedingContext);
+        if (!hasDOBContext) {
+          finalType = 'DATE';
+          finalReplacement = '[DATE]';
+          finalReason = 'Matched transaction or generic date pattern';
+          finalConfidence = 50;
+        }
+      }
+
       entities.push({
         text: matchedText,
-        type,
-        confidence,
-        reason,
+        type: finalType,
+        confidence: finalConfidence,
+        reason: finalReason,
         startIndex,
         endIndex,
-        replacement,
+        replacement: finalReplacement,
         status: 'pending',
       });
     }

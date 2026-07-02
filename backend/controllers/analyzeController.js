@@ -27,9 +27,25 @@ async function analyzeText(req, res, next) {
     // Step 2: Run Gemini for names/addresses (in parallel, non-blocking)
     const { sensitive_entities, safe_entities, suggested_aliases, conflicting_context, ai_error } = await detectWithGemini(text);
 
-    // Step 3: Merge — prioritize Gemini entities over Regex to prevent tag collision and fragmenting
+    // Bug 1: Server-side warnings for likely missed name candidates
+    const likelyNameRegex = /(?:of|is|Mr\.|Dr\.)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)\b/g;
+    let match;
+    likelyNameRegex.lastIndex = 0;
+    while ((match = likelyNameRegex.exec(text)) !== null) {
+      const candidate = match[1];
+      const foundInGemini = sensitive_entities.some(e => e.text.toLowerCase().includes(candidate.toLowerCase()) || candidate.toLowerCase().includes(e.text.toLowerCase()));
+      if (!foundInGemini) {
+        console.warn(`⚠️ [WARNING] Gemini AI might have missed likely name candidate: "${candidate}"`);
+      }
+    }
+
+    // Step 3: Merge & Reconcile — prioritize Gemini entities over Regex to prevent tag collision and fragmenting
     const filteredRegex = regexEntities.filter(
       (r) => {
+        // If same text caught by both, deduplicate (discard regex)
+        const exactTextMatch = sensitive_entities.some(e => e.text.toLowerCase() === r.text.toLowerCase());
+        if (exactTextMatch) return false;
+
         return !sensitive_entities.some((e) => {
           return (
             (r.startIndex >= e.startIndex && r.startIndex < e.endIndex) ||
