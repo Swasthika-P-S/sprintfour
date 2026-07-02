@@ -495,9 +495,16 @@ export default function Home() {
       ? safeEntities.map((e, safeIdx) => ({ ...e, safeIdx, isSafe: true, idx: null }))
       : [];
 
-    const allItems = [...sensitiveItems, ...safeItems].sort(
-      (a, b) => (a.startIndex ?? a.start ?? 0) - (b.startIndex ?? b.start ?? 0)
-    );
+    const allItems = [...sensitiveItems, ...safeItems].sort((a, b) => {
+      const aStart = a.startIndex ?? a.start ?? 0;
+      const bStart = b.startIndex ?? b.start ?? 0;
+      if (aStart === bStart) {
+        const aEnd = a.endIndex ?? a.end ?? 0;
+        const bEnd = b.endIndex ?? b.end ?? 0;
+        return bEnd - aEnd; // longer comes first
+      }
+      return aStart - bStart;
+    });
 
     const nonOverlapping = [];
     let lastEnd = -1;

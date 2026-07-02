@@ -24,14 +24,14 @@ async function analyzeText(req, res, next) {
     // Step 2: Run Gemini for names/addresses (in parallel, non-blocking)
     const { sensitive_entities, safe_entities, suggested_aliases, conflicting_context, ai_error } = await detectWithGemini(text);
 
-    // Step 3: Merge — avoid duplicates (same startIndex)
-    const filteredGemini = sensitive_entities.filter(
-      (e) => {
-        return !regexEntities.some((r) => {
+    // Step 3: Merge — prioritize Gemini entities over Regex to prevent tag collision and fragmenting
+    const filteredRegex = regexEntities.filter(
+      (r) => {
+        return !sensitive_entities.some((e) => {
           return (
-            (e.startIndex >= r.startIndex && e.startIndex < r.endIndex) ||
-            (e.endIndex > r.startIndex && e.endIndex <= r.endIndex) ||
-            (e.startIndex <= r.startIndex && e.endIndex >= r.endIndex)
+            (r.startIndex >= e.startIndex && r.startIndex < e.endIndex) ||
+            (r.endIndex > e.startIndex && r.endIndex <= e.endIndex) ||
+            (r.startIndex <= e.startIndex && r.endIndex >= e.endIndex)
           );
         });
       }
@@ -63,8 +63,13 @@ async function analyzeText(req, res, next) {
       }
     });
 
-    const allEntities = [...regexEntities, ...filteredGemini, ...conflictingEntities].sort(
-      (a, b) => a.startIndex - b.startIndex
+    const allEntities = [...filteredRegex, ...sensitive_entities, ...conflictingEntities].sort(
+      (a, b) => {
+        if (a.startIndex === b.startIndex) {
+          return b.endIndex - a.endIndex; // longer entity takes precedence
+        }
+        return a.startIndex - b.startIndex;
+      }
     );
 
     return res.json({
@@ -74,8 +79,8 @@ async function analyzeText(req, res, next) {
       conflicting_context: conflicting_context || [],
       total: allEntities.length,
       detectionMethods: {
-        regex: regexEntities.length,
-        ai: filteredGemini.length,
+        regex: filteredRegex.length,
+        ai: sensitive_entities.length,
       },
       ai_error: ai_error || null
     });

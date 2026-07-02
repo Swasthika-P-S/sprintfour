@@ -9,10 +9,12 @@ const apiKey = process.env.GEMINI_API_KEY;
 function findAllOccurrences(haystack, needle) {
   const indices = [];
   if (!needle) return indices;
-  let pos = haystack.indexOf(needle);
+  const lowerHaystack = haystack.toLowerCase();
+  const lowerNeedle = needle.toLowerCase();
+  let pos = lowerHaystack.indexOf(lowerNeedle);
   while (pos !== -1) {
     indices.push(pos);
-    pos = haystack.indexOf(needle, pos + needle.length);
+    pos = lowerHaystack.indexOf(lowerNeedle, pos + lowerNeedle.length);
   }
   return indices;
 }
@@ -133,7 +135,7 @@ ${text}
     const uniqueSensitive = Array.from(
       new Map(
         sensitive
-          .filter((e) => e.text && e.type && text.includes(e.text))
+          .filter((e) => e.text && e.type && text.toLowerCase().includes(e.text.trim().toLowerCase()))
           .map((e) => [e.text, e])
       ).values()
     );
@@ -161,7 +163,7 @@ ${text}
     const uniqueSafe = Array.from(
       new Map(
         safe
-          .filter((e) => e.text && text.includes(e.text))
+          .filter((e) => e.text && text.toLowerCase().includes(e.text.trim().toLowerCase()))
           .map((e) => [e.text, e])
       ).values()
     );
