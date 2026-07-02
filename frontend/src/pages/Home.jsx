@@ -732,7 +732,7 @@ export default function Home() {
               <TrustDashboard metrics={{
                 totalFound: entities.length,
                 hidden: redactedSet.size,
-                reviewRequired: entities.filter((e, idx) => e.confidence < 90 && !redactedSet.has(idx) && !ignoredSet.has(idx)).length,
+                reviewRequired: entities.filter((e, idx) => e.confidence < 90 && !redactedSet.has(idx) && !ignoredSet.has(idx)).length + aliasSuggestions.length + conflictingContexts.length,
                 humanApproved: ignoredSet.size,
                 keptVisible: safeEntities.length,
                 score: computePrivacyScore(entities.filter((_, i) => !redactedSet.has(i)), entities.length, context),
