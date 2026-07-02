@@ -202,7 +202,7 @@ export default function AuditReport({ entities, safeEntities }) {
                   </span>
                 </td>
                 <td>
-                  <span className={`action-pill ${item.finalAction.includes('Hidden') ? 'hidden' : 'visible'}`}>
+                  <span className={`action-pill ${item.finalAction.includes('Hidden') ? 'hidden' : item.finalAction.includes('Safe') ? 'safe' : 'visible'}`}>
                     {item.finalAction}
                   </span>
                 </td>
