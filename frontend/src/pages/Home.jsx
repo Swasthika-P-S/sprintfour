@@ -336,8 +336,15 @@ export default function Home() {
     const aliasOccurrences = findAllOccurrences(text, alias.text);
     const newEntities = [];
     
+    let maxPersonIdx = 0;
+    entities.forEach(e => {
+      const m = (e.replacement || '').match(/\[(NAME|PERSON)-(\d+)\]/i);
+      if (m) maxPersonIdx = Math.max(maxPersonIdx, parseInt(m[2], 10));
+    });
+    maxPersonIdx++;
+    let altReplacement = `[PERSON-${maxPersonIdx}]`;
+
     let newReplacement = alias.proposed_replacement || '[PERSON-1]';
-    let altReplacement = `[PERSON-X${Math.floor(Math.random()*100)}]`;
 
     // 1. Process Base Entity occurrences
     for (const occ of baseOccurrences) {
@@ -348,7 +355,17 @@ export default function Home() {
          const ee = ent.end ?? ent.endIndex ?? 0;
          return (s >= es && s < ee) || (e > es && e <= ee) || (s <= es && e >= ee);
       });
-      if (!overlaps) {
+      
+      const overlapsConflict = conflictingContexts.some(conf => {
+        const cOccs = findAllOccurrences(text, conf.name);
+        return cOccs.some(cOcc => {
+           const cs = cOcc.index;
+           const ce = cOcc.index + cOcc.text.length;
+           return (s >= cs && s < ce) || (e > cs && e <= ce) || (s <= cs && e >= ce);
+        });
+      });
+
+      if (!overlaps && !overlapsConflict) {
          newEntities.push({
            text: occ.text,
            startIndex: s, // Consistent property name
@@ -366,10 +383,22 @@ export default function Home() {
     for (const occ of aliasOccurrences) {
       const s = occ.index;
       const e = occ.index + occ.text.length;
+      
+      // Skip if it overlaps with an existing entity
       const overlaps = entities.some(ent => {
          const es = ent.start ?? ent.startIndex ?? 0;
          const ee = ent.end ?? ent.endIndex ?? 0;
          return (s >= es && s < ee) || (e > es && e <= ee) || (s <= es && e >= ee);
+      });
+      
+      // CRITICAL FIX: Skip if it overlaps with any pending Conflicting Context
+      const overlapsConflict = conflictingContexts.some(conf => {
+        const cOccs = findAllOccurrences(text, conf.name);
+        return cOccs.some(cOcc => {
+           const cs = cOcc.index;
+           const ce = cOcc.index + cOcc.text.length;
+           return (s >= cs && s < ce) || (e > cs && e <= ce) || (s <= cs && e >= ce);
+        });
       });
       // Also check against newEntities we just added
       const overlapsNew = newEntities.some(ent => {
@@ -378,7 +407,7 @@ export default function Home() {
          return (s >= es && s < ee) || (e > es && e <= ee) || (s <= es && e >= ee);
       });
 
-      if (!overlaps && !overlapsNew) {
+      if (!overlaps && !overlapsNew && !overlapsConflict) {
          newEntities.push({
            text: occ.text,
            startIndex: s,
